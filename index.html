@@ -1066,8 +1066,22 @@ body::after {
     </div>
 
     <div style="margin-top:var(--space-xl);padding-top:var(--space-md);border-top:1px solid #e0e0e0;text-align:center;">
+      <!-- GitHub Sync Section -->
+      <div style="max-width:500px;margin:0 auto 20px;text-align:left;">
+        <h4 style="font-family:var(--font-heading);color:var(--brand-color-forest);margin-bottom:8px;">☁️ 多设备云端同步</h4>
+        <p style="font-size:0.82rem;color:#888;margin-bottom:10px;">设置 GitHub Token 后，在此设备上的修改将自动同步到云端，其他设备打开网站后自动获取最新数据。</p>
+        <div class="form-row">
+          <input type="password" id="githubTokenInput" placeholder="输入 GitHub Personal Access Token" style="flex:1;">
+          <button class="btn btn-primary btn-sm" onclick="saveGitHubToken()"><i class="fa-solid fa-key"></i> 保存</button>
+        </div>
+        <p style="font-size:0.7rem;color:#aaa;margin-top:6px;">
+          如何获取 Token：GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens → 仅勾选本仓库 Contents: Read and write。<br>
+          <span id="tokenStatus" style="color:var(--brand-color-moss);"></span>
+        </p>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="syncToCloud()" style="margin-right:8px;"><i class="fa-solid fa-cloud-arrow-up"></i> 手动同步到云端</button>
       <button class="btn btn-secondary btn-sm" onclick="resetAll()"><i class="fa-solid fa-triangle-exclamation"></i> 重置全部数据为默认值</button>
-      <p style="font-size:0.78rem;color:#aaa;margin-top:8px;">所有修改自动保存到浏览器 localStorage，关闭页面后数据不丢失。</p>
+      <p style="font-size:0.78rem;color:#aaa;margin-top:8px;">设置 Token 后修改将自动同步 · 其他设备刷新即更新 · 重置不影响云端数据。</p>
     </div>
   </div>
 </section>
@@ -1176,7 +1190,14 @@ function loadData(key, defaultData) {
     return raw ? JSON.parse(raw) : defaultData;
   } catch(e) { return defaultData; }
 }
-function saveData(key, data) { localStorage.setItem(key, JSON.stringify(data)); }
+function saveData(key, data) {
+  localStorage.setItem(key, JSON.stringify(data));
+  // Auto-sync to cloud if token is set (debounced)
+  if (githubToken) {
+    clearTimeout(window._syncTimer);
+    window._syncTimer = setTimeout(() => syncToCloud(), 2000);
+  }
+}
 
 // ==================== INDEXEDDB FOR FILE STORAGE ====================
 const DB_NAME = 'ReimbursementFilesDB';
@@ -1595,6 +1616,30 @@ async function deleteFile(idx) {
   refreshAll();
   showToast('🗑️ 文件已删除');
 }
+
+// ==================== GITHUB TOKEN ====================
+function saveGitHubToken() {
+  const input = document.getElementById('githubTokenInput');
+  const token = input.value.trim();
+  if (!token) { showToast('⚠️ 请输入 GitHub Token'); return; }
+  githubToken = token;
+  localStorage.setItem('githubToken', token);
+  input.value = '';
+  updateTokenStatus();
+  showToast('✅ Token 已保存！修改后可点击"手动同步到云端"上传数据。');
+}
+
+function updateTokenStatus() {
+  const el = document.getElementById('tokenStatus');
+  if (el) {
+    el.textContent = githubToken ? '✅ Token 已设置 · 修改将自动同步到云端' : '⚠️ 未设置 Token · 修改仅保存在本设备';
+  }
+}
+
+// Auto-update token status after DOM load
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(updateTokenStatus, 500);
+});
 
 // ==================== RESET ALL ====================
 function resetAll() {
@@ -2016,7 +2061,75 @@ function resetBubbleMessages() {
 }
 
 // ==================== INIT ====================
-document.addEventListener('DOMContentLoaded', () => {
+// ==================== CLOUD SYNC ====================
+const DATA_URL = 'https://raw.githubusercontent.com/LYX-XXX/reimbursement-guide/master/data.json';
+let githubToken = localStorage.getItem('githubToken') || '';
+
+async function loadCloudData() {
+  try {
+    const url = DATA_URL + '?t=' + Date.now();
+    const resp = await fetch(url, { cache: 'no-cache' });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    // Merge cloud data over localStorage (cloud is source of truth)
+    if (data.accommodation) { accomData = data.accommodation; saveData('accomData', accomData); }
+    if (data.notices) { noticeData = data.notices; saveData('noticeData', noticeData); }
+    if (data.files) { fileData = data.files; saveData('fileData', fileData); }
+    if (data.steps) { stepsData = data.steps; saveData('stepsData', stepsData); }
+    if (data.checklistItems) { saveData('checklistItems', data.checklistItems); }
+    if (data.bubbleMessages) { saveData('bubbleMessages', data.bubbleMessages); }
+    console.log('✅ 云端数据已同步');
+    return true;
+  } catch(e) {
+    console.log('⚠️ 云端同步失败，使用本地数据：' + e.message);
+    return false;
+  }
+}
+
+async function syncToCloud() {
+  if (!githubToken) { showToast('⚠️ 请先在教师管理中设置 GitHub Token'); return false; }
+  try {
+    // Get current SHA of data.json
+    const getResp = await fetch('https://api.github.com/repos/LYX-XXX/reimbursement-guide/contents/data.json', {
+      headers: { 'Authorization': 'Bearer ' + githubToken, 'Accept': 'application/vnd.github+json' }
+    });
+    if (!getResp.ok) throw new Error('获取文件信息失败: ' + getResp.status);
+    const fileInfo = await getResp.json();
+
+    // Build data object
+    const cloudPayload = {
+      accommodation: accomData,
+      notices: noticeData,
+      files: fileData.map(f => ({ name: f.name, desc: f.desc, category: f.category, icon: f.icon, ...(f.realPath ? { realPath: f.realPath } : {}) })),
+      steps: stepsData,
+      checklistItems: JSON.parse(localStorage.getItem('checklistItems') || '[]'),
+      bubbleMessages: JSON.parse(localStorage.getItem('bubbleMessages') || '{}')
+    };
+
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(cloudPayload, null, 2))));
+    const putResp = await fetch('https://api.github.com/repos/LYX-XXX/reimbursement-guide/contents/data.json', {
+      method: 'PUT',
+      headers: { 'Authorization': 'Bearer ' + githubToken, 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'sync: update data.json from admin panel', content, sha: fileInfo.sha })
+    });
+    if (!putResp.ok) throw new Error('同步失败: ' + putResp.status);
+    showToast('✅ 数据已同步到云端！其他设备刷新后将自动获取最新数据。');
+    return true;
+  } catch(e) {
+    showToast('⚠️ 云端同步失败：' + e.message);
+    return false;
+  }
+}
+
+// ==================== INIT ====================
+document.addEventListener('DOMContentLoaded', async () => {
+  // First try to load cloud data (source of truth)
+  await loadCloudData();
+  // Reload from localStorage (which now has cloud-merged data)
+  accomData  = loadData('accomData', DEFAULT_ACCOM);
+  noticeData = loadData('noticeData', DEFAULT_NOTICES);
+  fileData   = loadData('fileData', DEFAULT_FILES);
+  stepsData  = loadData('stepsData', DEFAULT_STEPS);
   refreshAll();
   initNavigation();
   initAdminTabs();
@@ -2024,8 +2137,9 @@ document.addEventListener('DOMContentLoaded', () => {
   renderChecklist();
   populateCalcRegions();
   initAssistant();
-  // If admin was enabled, refresh accom editor
   if (isAdminMode) refreshAccomEditor();
+  // Show sync status
+  if (githubToken) console.log('🔗 GitHub 同步已就绪');
 });
 </script>
 
