@@ -815,7 +815,7 @@ body::after {
       </div>
       <div class="phase-content" id="phase2Content">
         <ol>
-          <li><strong>餐补与交通费：</strong>伙食费（餐补）每人每天 <strong>100 元</strong>，交通费每人每天 <strong>100 元</strong>。有餐补的不再报销餐费。</li>
+          <li><strong>餐补与交通费：</strong>无餐补；交通费每人每天 <strong>80 元</strong>。</li>
           <li><strong>酒店发票：</strong>需提前联系酒店前台，将电子发票发至个人邮箱；打印后须<strong>彩印</strong>，并在每页右下角<strong>签署个人姓名</strong>。</li>
           <li><strong>会务费 / 交通费：</strong>可报销，须提供相应的正规发票。</li>
           <li><strong>团队多人报销：</strong>统一只提供一个银行卡号，所有款项汇入该卡。最后需列表汇总：每个人的去程费用、返程费用、酒店费用及实际总报销金额。</li>
@@ -1149,7 +1149,7 @@ const DEFAULT_ACCOM = [
 const DEFAULT_NOTICES = [
   { title: '发票彩印要求', desc: '所有报销发票必须彩色打印，黑白打印件不予受理。请使用彩色打印机输出后再提交。' },
   { title: '发票签名规范', desc: '每页发票右下角须用黑色签字笔签署报销人姓名，不得使用铅笔或蓝色笔。' },
-  { title: '餐补与交通费说明', desc: '伙食费（餐补）每人每天100元，交通费每人每天100元。有餐补的不再报销餐费。超标准部分自行承担。' },
+  { title: '餐补与交通费说明', desc: '无餐补；交通费每人每天80元。超标准部分自行承担。' },
   { title: '报销时效提醒', desc: '出差结束后30日内须提交全部报销材料，逾期将影响财务审批进度。' },
   { title: '团队报销银行卡要求', desc: '多人团队报销统一提供一个银行卡号，所有费用汇入该卡。最后须列表汇总每人各项费用明细。' },
   { title: '勤俭节约通知', desc: '一个团队原则上只由汇报人出差。如需多人同行，带队老师须出具书面材料说明必要性。' },
@@ -1893,8 +1893,8 @@ function calculateCost() {
   const days = parseInt(document.getElementById('calcDays').value) || 0;
   const accomRate = parseInt(document.getElementById('calcAccomRate').value) || 0;
   if (days <= 0) { showToast('⚠️ 请填写出差天数'); return; }
-  const mealTotal = days * 100;
-  const transportTotal = days * 100;
+  const mealTotal = 0;
+  const transportTotal = days * 80;
   const accomTotal = accomRate * days;
   const grandTotal = mealTotal + transportTotal + accomTotal;
   const result = document.getElementById('calcResult');
@@ -1902,8 +1902,8 @@ function calculateCost() {
   result.innerHTML = `
     <h4>📊 预估报销明细</h4>
     <div class="line-item"><span>📅 出差天数</span><span>${days} 天</span></div>
-    <div class="line-item"><span>🍽️ 伙食费（餐补）</span><span>${days} × 100 = ¥${mealTotal}</span></div>
-    <div class="line-item"><span>🚌 交通费</span><span>${days} × 100 = ¥${transportTotal}</span></div>
+    <div class="line-item"><span>🍽️ 伙食费（餐补）</span><span>¥0（无餐补）</span></div>
+    <div class="line-item"><span>🚌 交通费</span><span>${days} × 80 = ¥${transportTotal}</span></div>
     <div class="line-item"><span>🏨 住宿费</span><span>${days} × ${accomRate} = ¥${accomTotal}</span></div>
     <div class="line-total"><span>💰 预估报销总额</span><span>¥${grandTotal}</span></div>
     <p style="font-size:0.75rem;color:#999;margin-top:8px;">* 实际金额以审批结果为准 · 住宿费2人一间</p>`;
@@ -1913,7 +1913,7 @@ function calculateCost() {
 // ==================== FEATURE 3: FLOATING ASSISTANT ====================
 const DEFAULT_BUBBLE_MESSAGES = {
   home: '👋 准备好出差了吗？先看看需要哪些材料吧！',
-  process: '💡 小贴士：餐补和交通费各100元/天，记得彩印发票并在每页签名哦！',
+  process: '💡 小贴士：交通费80元/天，记得彩印发票并在每页签名哦！',
   downloads: '📥 别忘了下载审批表和超标准乘坐审批表！',
   notices: '⚠️ 出发前务必查看最新注意事项，避免报销被退回。',
   default: '✨ 报销顺利！有任何问题随时查看流程指南～'
