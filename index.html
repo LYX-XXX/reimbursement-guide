@@ -549,6 +549,152 @@ body::after {
   .steps-row { grid-template-columns: 1fr; }
   .hero-buttons { flex-direction: column; align-items: center; }
 }
+
+/* ===== Feature 1: Material Checklist Float ===== */
+.checklist-float {
+  position: fixed; bottom: 120px; right: 24px; z-index: 900;
+  background: var(--color-card-bg);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15), 4px 4px 0 var(--color-card-shadow-light), 8px 8px 0 rgba(27,67,50,0.06);
+  width: 280px;
+  overflow: hidden;
+  transition: transform 0.3s var(--transition-medium), opacity 0.3s;
+}
+.checklist-float.collapsed { transform: translateY(calc(100% - 52px)); }
+.checklist-header {
+  background: var(--brand-color-forest); color: var(--color-button-beige);
+  padding: 14px 18px; cursor: pointer;
+  display: flex; justify-content: space-between; align-items: center;
+  font-weight: 700; font-size: 0.9rem;
+  user-select: none;
+}
+.checklist-header .count-badge {
+  background: var(--brand-color-sage); color: var(--brand-color-forest);
+  border-radius: 20px; padding: 2px 10px; font-size: 0.75rem; font-weight: 700;
+}
+.checklist-body { padding: 12px 0; max-height: 340px; overflow-y: auto; }
+.checklist-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 18px; cursor: pointer; transition: background 0.15s;
+  font-size: 0.88rem; color: #444;
+}
+.checklist-item:hover { background: rgba(64,145,108,0.05); }
+.checklist-item.checked { color: var(--brand-color-moss); }
+.checklist-item .check-box {
+  width: 22px; height: 22px; border-radius: 50%;
+  border: 2px solid #ccc; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+  font-size: 0.7rem; color: transparent;
+}
+.checklist-item.checked .check-box {
+  border-color: var(--brand-color-moss); background: var(--brand-color-moss); color: #fff;
+}
+
+/* Confetti Animation */
+@keyframes confettiDrop {
+  0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+.confetti-piece {
+  position: fixed; top: -20px; z-index: 10001; pointer-events: none;
+  width: 12px; height: 12px;
+  animation: confettiDrop 2.8s ease-in forwards;
+}
+.congrats-overlay {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.5); z-index: 10000;
+  display: flex; align-items: center; justify-content: center;
+}
+.congrats-card {
+  background: #fff; border-radius: var(--radius-lg);
+  padding: 40px; text-align: center; max-width: 400px; width: 90%;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+@keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.congrats-card h3 { font-family: var(--font-heading); font-size: 1.6rem; color: var(--brand-color-forest); margin-bottom: 12px; }
+.congrats-card p { color: #666; margin-bottom: 24px; }
+.congrats-card .close-btn { margin-top: 12px; }
+
+/* ===== Feature 2: Cost Calculator ===== */
+.calculator-card {
+  background: var(--color-card-bg);
+  border-radius: var(--radius-lg);
+  box-shadow: 4px 4px 0 var(--color-card-shadow-light), 8px 8px 0 rgba(27,67,50,0.06);
+  margin-bottom: var(--space-xl); overflow: hidden;
+}
+.calc-header {
+  background: linear-gradient(135deg, var(--brand-color-forest), var(--brand-color-pine));
+  color: var(--color-button-beige);
+  padding: 16px 24px; cursor: pointer;
+  display: flex; justify-content: space-between; align-items: center;
+  font-weight: 700; font-size: 1rem;
+  user-select: none;
+}
+.calc-header i { transition: transform 0.3s; }
+.calculator-card.open .calc-header i { transform: rotate(180deg); }
+.calc-body { display: none; padding: 24px; }
+.calculator-card.open .calc-body { display: block; }
+.calc-row { display: flex; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; align-items: flex-end; }
+.calc-row label { font-weight: 600; font-size: 0.85rem; color: var(--brand-color-forest); display: block; margin-bottom: 4px; }
+.calc-row input, .calc-row select {
+  padding: 10px 14px; border: 1.5px solid var(--color-border-light);
+  border-radius: var(--radius-sm); font-size: 0.9rem; font-family: var(--font-body);
+  background: #fff; min-width: 100px;
+}
+.calc-row input:focus, .calc-row select:focus { outline: none; border-color: var(--brand-color-moss); }
+.calc-result {
+  background: linear-gradient(135deg, rgba(64,145,108,0.08), rgba(27,67,50,0.04));
+  border-radius: var(--radius-md); padding: 20px;
+  margin-top: 16px; border: 1px solid var(--brand-color-olive);
+}
+.calc-result h4 { font-family: var(--font-heading); color: var(--brand-color-forest); margin-bottom: 12px; }
+.calc-result .line-item {
+  display: flex; justify-content: space-between; padding: 6px 0;
+  font-size: 0.9rem; color: #555; border-bottom: 1px dashed #e0e0e0;
+}
+.calc-result .line-total {
+  display: flex; justify-content: space-between; padding: 10px 0 0;
+  font-weight: 700; font-size: 1.1rem; color: var(--brand-color-forest);
+}
+
+/* ===== Feature 3: Floating Assistant ===== */
+.assistant-bubble {
+  position: fixed; bottom: 30px; right: 30px; z-index: 901;
+  background: var(--brand-color-forest); color: #fff;
+  border-radius: 24px; padding: 14px 20px;
+  max-width: 220px;
+  font-size: 0.85rem; font-weight: 500;
+  box-shadow: 0 6px 24px rgba(27,67,50,0.35);
+  cursor: pointer; transition: all 0.3s ease;
+  display: flex; align-items: center; gap: 10px;
+  line-height: 1.4;
+  animation: bubbleIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+@keyframes bubbleIn { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.assistant-bubble:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(27,67,50,0.45); }
+.assistant-bubble .bubble-icon {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--brand-color-sage); color: var(--brand-color-forest);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; flex-shrink: 0;
+}
+.assistant-bubble .bubble-close {
+  position: absolute; top: -6px; right: -6px;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: #c0392b; color: #fff; border: none;
+  font-size: 0.65rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity 0.2s;
+}
+.assistant-bubble:hover .bubble-close { opacity: 1; }
+
+@media (max-width: 768px) {
+  .checklist-float { right: 12px; bottom: 100px; width: 250px; }
+  .assistant-bubble { right: 12px; bottom: 16px; max-width: 180px; font-size: 0.78rem; }
+  .calc-row { flex-direction: column; }
+}
 </style>
 </head>
 <body>
@@ -700,6 +846,34 @@ body::after {
           <strong>⚠️ 注意：</strong>审批不通过将被退回重新提交。请仔细检查所有材料，特别是发票规范（彩印 + 签名）和审批表备注信息，避免反复修改延误报销。
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- ===== Feature 2: Cost Calculator ===== -->
+  <div class="calculator-card open" id="calculatorCard" style="margin-top:var(--space-md);">
+    <div class="calc-header" onclick="toggleCalculator()">
+      <span><i class="fa-solid fa-calculator"></i> 💰 智能费用试算器</span>
+      <i class="fa-solid fa-chevron-down"></i>
+    </div>
+    <div class="calc-body">
+      <div class="calc-row">
+        <div>
+          <label>📅 出差天数</label>
+          <input type="number" id="calcDays" placeholder="例如：3" min="1" value="3" style="width:80px;">
+        </div>
+        <div>
+          <label>🏨 住宿地区</label>
+          <select id="calcRegion" onchange="onCalcRegionChange()">
+            <option value="">-- 选择地区 --</option>
+          </select>
+        </div>
+        <div>
+          <label>💵 住宿标准（元/天）</label>
+          <input type="number" id="calcAccomRate" placeholder="或手动输入" min="0" value="0" style="width:110px;">
+        </div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="calculateCost()"><i class="fa-solid fa-calculator"></i> 开始试算</button>
+      <div class="calc-result" id="calcResult" style="display:none;"></div>
     </div>
   </div>
 </section>
@@ -865,6 +1039,27 @@ body::after {
     </div>
   </div>
 </section>
+
+<!-- ===== Feature 1: Material Checklist Float ===== -->
+<div class="checklist-float collapsed" id="checklistFloat">
+  <div class="checklist-header" onclick="toggleChecklist()">
+    <span><i class="fa-solid fa-clipboard-check"></i> 材料清单检测</span>
+    <span class="count-badge" id="checklistCount">0/7</span>
+  </div>
+  <div class="checklist-body" id="checklistBody"></div>
+</div>
+
+<!-- ===== Feature 2: Cost Calculator (placed near process section) ===== -->
+
+<!-- ===== Feature 3: Floating Assistant ===== -->
+<div class="assistant-bubble" id="assistantBubble" onclick="dismissBubble()">
+  <div class="bubble-icon"><i class="fa-solid fa-lightbulb"></i></div>
+  <span id="bubbleText">记得彩印发票并每页签名哦 ✨</span>
+  <button class="bubble-close" onclick="event.stopPropagation(); hideBubble()"><i class="fa-solid fa-xmark"></i></button>
+</div>
+
+<!-- ===== Congrats Overlay (hidden) ===== -->
+<div id="congratsOverlay" style="display:none;"></div>
 
 <!-- ===== Footer ===== -->
 <footer class="site-footer">
@@ -1378,7 +1573,9 @@ function resetAll() {
   saveData('fileData', fileData);
   saveData('stepsData', stepsData);
   clearAllFilesFromDB().catch(() => {});
+  localStorage.removeItem('checklistState');
   refreshAll();
+  renderChecklist();
   showToast('✅ 全部数据已恢复默认值');
 }
 
@@ -1488,12 +1685,195 @@ function initNavigation() {
   });
 }
 
+// ==================== FEATURE 1: MATERIAL CHECKLIST ====================
+const CHECKLIST_ITEMS = [
+  '因公出差审批表',
+  '比赛通知（红头文件）',
+  '入围名单证明',
+  '超标准乘坐审批表（如需飞机）',
+  '机票比价截图（如需飞机）',
+  '酒店发票（彩印+签名）',
+  '会务/交通费发票'
+];
+
+function renderChecklist() {
+  const body = document.getElementById('checklistBody');
+  if (!body) return;
+  const checked = JSON.parse(localStorage.getItem('checklistState') || '[]');
+  body.innerHTML = CHECKLIST_ITEMS.map((item, i) => `
+    <div class="checklist-item${checked.includes(i) ? ' checked' : ''}" onclick="toggleCheckItem(${i})">
+      <div class="check-box"><i class="fa-solid fa-check"></i></div>
+      <span>${item}</span>
+    </div>`).join('');
+  updateChecklistCount();
+}
+
+function updateChecklistCount() {
+  const checked = JSON.parse(localStorage.getItem('checklistState') || '[]');
+  const badge = document.getElementById('checklistCount');
+  if (badge) badge.textContent = `${checked.length}/${CHECKLIST_ITEMS.length}`;
+}
+
+function toggleChecklist() {
+  document.getElementById('checklistFloat').classList.toggle('collapsed');
+}
+
+function toggleCheckItem(idx) {
+  let checked = JSON.parse(localStorage.getItem('checklistState') || '[]');
+  if (checked.includes(idx)) {
+    checked = checked.filter(i => i !== idx);
+  } else {
+    checked.push(idx);
+  }
+  localStorage.setItem('checklistState', JSON.stringify(checked));
+  renderChecklist();
+  // Check if all done
+  if (checked.length === CHECKLIST_ITEMS.length) {
+    triggerConfetti();
+  }
+}
+
+function triggerConfetti() {
+  const colors = ['#52B788','#40916C','#E8D0A3','#95D5B2','#1B4332','#FFD700','#FF6B6B','#4ECDC4'];
+  for (let i = 0; i < 80; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = Math.random() * 100 + '%';
+    piece.style.animationDelay = Math.random() * 1.5 + 's';
+    piece.style.animationDuration = (2.5 + Math.random() * 2) + 's';
+    piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+    piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+    piece.style.width = (8 + Math.random() * 14) + 'px';
+    piece.style.height = (8 + Math.random() * 14) + 'px';
+    document.body.appendChild(piece);
+    setTimeout(() => piece.remove(), 3500);
+  }
+  // Show congrats overlay
+  const overlay = document.getElementById('congratsOverlay');
+  overlay.style.display = 'flex';
+  overlay.innerHTML = `
+    <div class="congrats-card">
+      <div style="font-size:3rem;margin-bottom:8px;">🎉</div>
+      <h3>材料准备齐全！</h3>
+      <p>所有报销材料已检查完毕，可以放心提交给辅导员审核啦！祝你报销顺利～</p>
+      <button class="btn btn-primary" onclick="closeCongrats()">✅ 知道了，太棒了！</button>
+    </div>`;
+}
+
+function closeCongrats() {
+  document.getElementById('congratsOverlay').style.display = 'none';
+  document.getElementById('congratsOverlay').innerHTML = '';
+}
+
+// ==================== FEATURE 2: COST CALCULATOR ====================
+function populateCalcRegions() {
+  const select = document.getElementById('calcRegion');
+  if (!select) return;
+  select.innerHTML = '<option value="">-- 选择地区 --</option>' +
+    accomData.map(a => `<option value="${a.amount}">${a.region}（${a.amount}元/天）</option>`).join('');
+}
+
+function onCalcRegionChange() {
+  const select = document.getElementById('calcRegion');
+  const rateInput = document.getElementById('calcAccomRate');
+  if (select.value) rateInput.value = select.value;
+}
+
+function toggleCalculator() {
+  document.getElementById('calculatorCard').classList.toggle('open');
+}
+
+function calculateCost() {
+  const days = parseInt(document.getElementById('calcDays').value) || 0;
+  const accomRate = parseInt(document.getElementById('calcAccomRate').value) || 0;
+  if (days <= 0) { showToast('⚠️ 请填写出差天数'); return; }
+  const mealTotal = days * 100;
+  const transportTotal = days * 100;
+  const accomTotal = accomRate * days;
+  const grandTotal = mealTotal + transportTotal + accomTotal;
+  const result = document.getElementById('calcResult');
+  result.style.display = 'block';
+  result.innerHTML = `
+    <h4>📊 预估报销明细</h4>
+    <div class="line-item"><span>📅 出差天数</span><span>${days} 天</span></div>
+    <div class="line-item"><span>🍽️ 伙食费（餐补）</span><span>${days} × 100 = ¥${mealTotal}</span></div>
+    <div class="line-item"><span>🚌 交通费</span><span>${days} × 100 = ¥${transportTotal}</span></div>
+    <div class="line-item"><span>🏨 住宿费</span><span>${days} × ${accomRate} = ¥${accomTotal}</span></div>
+    <div class="line-total"><span>💰 预估报销总额</span><span>¥${grandTotal}</span></div>
+    <p style="font-size:0.75rem;color:#999;margin-top:8px;">* 实际金额以审批结果为准 · 住宿费2人一间</p>`;
+  document.getElementById('calculatorCard').classList.add('open');
+}
+
+// ==================== FEATURE 3: FLOATING ASSISTANT ====================
+const BUBBLE_MESSAGES = {
+  home: '👋 准备好出差了吗？先看看需要哪些材料吧！',
+  process: '💡 小贴士：餐补和交通费各100元/天，记得彩印发票并在每页签名哦！',
+  downloads: '📥 别忘了下载审批表和超标准乘坐审批表！',
+  notices: '⚠️ 出发前务必查看最新注意事项，避免报销被退回。',
+  default: '✨ 报销顺利！有任何问题随时查看流程指南～'
+};
+
+let bubbleHidden = false;
+
+function initAssistant() {
+  const sections = ['home', 'process', 'downloads', 'notices'];
+  const observer = new IntersectionObserver((entries) => {
+    if (bubbleHidden) return;
+    let activeSection = 'default';
+    entries.forEach(entry => {
+      if (entry.isIntersecting) activeSection = entry.target.id;
+    });
+    // Find the highest section that's still visible
+    for (const id of sections) {
+      const el = document.getElementById(id);
+      if (el) {
+        const rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight * 0.6) activeSection = id;
+      }
+    }
+    updateBubbleText(activeSection);
+  }, { threshold: [0, 0.2, 0.5] });
+  sections.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) observer.observe(el);
+  });
+}
+
+function updateBubbleText(section) {
+  const textEl = document.getElementById('bubbleText');
+  if (textEl) {
+    textEl.textContent = BUBBLE_MESSAGES[section] || BUBBLE_MESSAGES.default;
+  }
+}
+
+function dismissBubble() {
+  // Rotate through tips on click
+  const tips = Object.values(BUBBLE_MESSAGES);
+  const current = document.getElementById('bubbleText').textContent;
+  let idx = tips.indexOf(current);
+  idx = (idx + 1) % tips.length;
+  document.getElementById('bubbleText').textContent = tips[idx];
+}
+
+function hideBubble() {
+  bubbleHidden = true;
+  document.getElementById('assistantBubble').style.display = 'none';
+  // Re-show after 2 minutes
+  setTimeout(() => {
+    bubbleHidden = false;
+    document.getElementById('assistantBubble').style.display = 'flex';
+  }, 120000);
+}
+
 // ==================== INIT ====================
 document.addEventListener('DOMContentLoaded', () => {
   refreshAll();
   initNavigation();
   initAdminTabs();
   updateAdminVisibility();
+  renderChecklist();
+  populateCalcRegions();
+  initAssistant();
   // If admin was enabled, refresh accom editor
   if (isAdminMode) refreshAccomEditor();
 });
