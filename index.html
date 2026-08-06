@@ -938,6 +938,8 @@ body::after {
       <button class="admin-tab" data-tab="tabAccom">🏨 住宿标准编辑</button>
       <button class="admin-tab" data-tab="tabFiles">📁 文件上传管理</button>
       <button class="admin-tab" data-tab="tabNotices">📢 注意事项管理</button>
+      <button class="admin-tab" data-tab="tabChecklist">📋 材料清单编辑</button>
+      <button class="admin-tab" data-tab="tabBubble">💬 小助手内容编辑</button>
     </div>
 
     <!-- Tab: Edit Steps -->
@@ -1038,6 +1040,31 @@ body::after {
       </div>
     </div>
 
+    <!-- Tab: Edit Checklist Items -->
+    <div class="admin-tab-content" id="tabChecklist">
+      <p style="color:#888;margin-bottom:16px;">编辑材料清单中的检测项目（增删改），修改后保存，前台实时更新。</p>
+      <div id="adminChecklistList"></div>
+      <h4 style="font-family:var(--font-heading);margin:16px 0 12px;color:var(--brand-color-forest);">➕ 添加新检测项</h4>
+      <div class="inline-add">
+        <div class="form-row">
+          <input type="text" id="newChecklistItem" placeholder="新材料名称（例如：保险单复印件）">
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="addChecklistItem()"><i class="fa-solid fa-plus"></i> 添加</button>
+      </div>
+      <div class="admin-actions" style="margin-top:16px;">
+        <button class="btn btn-primary btn-sm" onclick="resetChecklistItems()"><i class="fa-solid fa-rotate-left"></i> 恢复默认清单</button>
+      </div>
+    </div>
+
+    <!-- Tab: Edit Assistant Messages -->
+    <div class="admin-tab-content" id="tabBubble">
+      <p style="color:#888;margin-bottom:16px;">编辑浮动小助手在不同页面显示的提示文字。</p>
+      <div id="adminBubbleList"></div>
+      <div class="admin-actions" style="margin-top:16px;">
+        <button class="btn btn-primary btn-sm" onclick="resetBubbleMessages()"><i class="fa-solid fa-rotate-left"></i> 恢复默认提示</button>
+      </div>
+    </div>
+
     <div style="margin-top:var(--space-xl);padding-top:var(--space-md);border-top:1px solid #e0e0e0;text-align:center;">
       <button class="btn btn-secondary btn-sm" onclick="resetAll()"><i class="fa-solid fa-triangle-exclamation"></i> 重置全部数据为默认值</button>
       <p style="font-size:0.78rem;color:#aaa;margin-top:8px;">所有修改自动保存到浏览器 localStorage，关闭页面后数据不丢失。</p>
@@ -1050,10 +1077,13 @@ body::after {
   <div class="checklist-header">
     <span onclick="toggleChecklist()" style="flex:1;cursor:pointer;"><i class="fa-solid fa-clipboard-check"></i> 材料清单检测</span>
     <span class="count-badge" id="checklistCount" onclick="toggleChecklist()" style="cursor:pointer;">0/7</span>
-    <button style="background:none;border:none;color:var(--color-button-beige);cursor:pointer;font-size:1rem;padding:0 0 0 8px;line-height:1;opacity:0.7;" onclick="event.stopPropagation(); hideChecklist()" title="关闭"><i class="fa-solid fa-xmark"></i></button>
+    <button style="background:none;border:none;color:var(--color-button-beige);cursor:pointer;font-size:0.8rem;padding:0 0 0 6px;line-height:1;opacity:0.7;" onclick="event.stopPropagation(); resetChecklist()" title="重置"><i class="fa-solid fa-rotate-left"></i></button>
+    <button style="background:none;border:none;color:var(--color-button-beige);cursor:pointer;font-size:1rem;padding:0 0 0 4px;line-height:1;opacity:0.7;" onclick="event.stopPropagation(); hideChecklist()" title="关闭"><i class="fa-solid fa-xmark"></i></button>
   </div>
   <div class="checklist-body" id="checklistBody"></div>
 </div>
+
+<!-- Congrats overlay (dynamically created, pre-existing div removed) -->
 
 <!-- ===== Feature 2: Cost Calculator (placed near process section) ===== -->
 
@@ -1065,7 +1095,6 @@ body::after {
 </div>
 
 <!-- ===== Congrats Overlay (hidden) ===== -->
-<div id="congratsOverlay" class="congrats-overlay" style="display:none;"></div>
 
 <!-- ===== Footer ===== -->
 <footer class="site-footer">
@@ -1319,6 +1348,8 @@ function refreshAll() {
   renderAdminNotices();
   renderAdminStepsEditor();
   renderAdminFiles();
+  renderAdminChecklist();
+  renderAdminBubble();
   refreshAccomEditor();
   updateAdminVisibility();
 }
@@ -1580,6 +1611,10 @@ function resetAll() {
   saveData('stepsData', stepsData);
   clearAllFilesFromDB().catch(() => {});
   localStorage.removeItem('checklistState');
+  checklistItems = [...DEFAULT_CHECKLIST_ITEMS];
+  saveData('checklistItems', checklistItems);
+  bubbleMessages = { ...DEFAULT_BUBBLE_MESSAGES };
+  saveData('bubbleMessages', bubbleMessages);
   refreshAll();
   renderChecklist();
   showToast('✅ 全部数据已恢复默认值');
@@ -1692,7 +1727,7 @@ function initNavigation() {
 }
 
 // ==================== FEATURE 1: MATERIAL CHECKLIST ====================
-const CHECKLIST_ITEMS = [
+const DEFAULT_CHECKLIST_ITEMS = [
   '因公出差审批表',
   '比赛通知（红头文件）',
   '入围名单证明',
@@ -1702,12 +1737,19 @@ const CHECKLIST_ITEMS = [
   '会务/交通费发票'
 ];
 
+let checklistItems = loadData('checklistItems', DEFAULT_CHECKLIST_ITEMS);
+
 function renderChecklist() {
   const body = document.getElementById('checklistBody');
   if (!body) return;
   const checked = JSON.parse(localStorage.getItem('checklistState') || '[]');
-  body.innerHTML = CHECKLIST_ITEMS.map((item, i) => `
-    <div class="checklist-item${checked.includes(i) ? ' checked' : ''}" onclick="toggleCheckItem(${i})">
+  // Filter checked items to only those still in the list
+  const validChecked = checked.filter(i => i < checklistItems.length);
+  if (validChecked.length !== checked.length) {
+    localStorage.setItem('checklistState', JSON.stringify(validChecked));
+  }
+  body.innerHTML = checklistItems.map((item, i) => `
+    <div class="checklist-item${validChecked.includes(i) ? ' checked' : ''}" onclick="toggleCheckItem(${i})">
       <div class="check-box"><i class="fa-solid fa-check"></i></div>
       <span>${item}</span>
     </div>`).join('');
@@ -1716,8 +1758,9 @@ function renderChecklist() {
 
 function updateChecklistCount() {
   const checked = JSON.parse(localStorage.getItem('checklistState') || '[]');
+  const validChecked = checked.filter(i => i < checklistItems.length);
   const badge = document.getElementById('checklistCount');
-  if (badge) badge.textContent = `${checked.length}/${CHECKLIST_ITEMS.length}`;
+  if (badge) badge.textContent = `${validChecked.length}/${checklistItems.length}`;
 }
 
 function toggleChecklist() {
@@ -1733,10 +1776,62 @@ function toggleCheckItem(idx) {
   }
   localStorage.setItem('checklistState', JSON.stringify(checked));
   renderChecklist();
-  // Check if all done
-  if (checked.length === CHECKLIST_ITEMS.length) {
+  const validChecked = checked.filter(i => i < checklistItems.length);
+  if (validChecked.length === checklistItems.length && checklistItems.length > 0) {
     triggerConfetti();
   }
+}
+
+function resetChecklist() {
+  localStorage.removeItem('checklistState');
+  renderChecklist();
+  showToast('✅ 材料清单已重置');
+}
+
+// Admin functions for checklist
+function renderAdminChecklist() {
+  const container = document.getElementById('adminChecklistList');
+  if (!container) return;
+  container.innerHTML = checklistItems.map((item, i) => `
+    <div class="notice-item" style="align-items:center;">
+      <span style="flex:1;">📋 ${item}</span>
+      <button class="btn btn-xs btn-secondary" style="color:#c0392b;" onclick="deleteChecklistItem(${i})"><i class="fa-solid fa-trash"></i> 删除</button>
+    </div>`).join('') || '<p style="color:#999;">暂无检测项</p>';
+}
+
+function addChecklistItem() {
+  const input = document.getElementById('newChecklistItem');
+  const val = input.value.trim();
+  if (!val) { showToast('⚠️ 请输入材料名称'); return; }
+  checklistItems.push(val);
+  saveData('checklistItems', checklistItems);
+  input.value = '';
+  renderChecklist();
+  renderAdminChecklist();
+  showToast('✅ 检测项已添加！');
+}
+
+function deleteChecklistItem(idx) {
+  if (!confirm(`确定删除"${checklistItems[idx]}"？`)) return;
+  checklistItems.splice(idx, 1);
+  saveData('checklistItems', checklistItems);
+  // Clean up checked state for removed items
+  let checked = JSON.parse(localStorage.getItem('checklistState') || '[]');
+  checked = checked.filter(i => i !== idx).map(i => i > idx ? i - 1 : i);
+  localStorage.setItem('checklistState', JSON.stringify(checked));
+  renderChecklist();
+  renderAdminChecklist();
+  showToast('🗑️ 检测项已删除');
+}
+
+function resetChecklistItems() {
+  if (!confirm('确定恢复默认材料清单？')) return;
+  checklistItems = [...DEFAULT_CHECKLIST_ITEMS];
+  saveData('checklistItems', checklistItems);
+  localStorage.removeItem('checklistState');
+  renderChecklist();
+  renderAdminChecklist();
+  showToast('✅ 清单已恢复默认');
 }
 
 function triggerConfetti() {
@@ -1755,18 +1850,25 @@ function triggerConfetti() {
     setTimeout(() => piece.remove(), 3500);
   }
   // Show centered congrats card, auto-dismiss after 3.5s
-  const overlay = document.getElementById('congratsOverlay');
-  overlay.style.display = 'flex';
+  const existing = document.querySelector('.congrats-overlay-dynamic');
+  if (existing) existing.remove();
+  const overlay = document.createElement('div');
+  overlay.className = 'congrats-overlay';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:99999;display:flex;align-items:center;justify-content:center;';
   overlay.innerHTML = `
     <div class="congrats-card">
       <div style="font-size:3rem;margin-bottom:8px;">🎉</div>
       <h3>材料准备齐全！</h3>
       <p>所有报销材料已检查完毕，可以放心提交给辅导员审核啦！祝你报销顺利～</p>
     </div>`;
-  setTimeout(() => {
-    overlay.style.display = 'none';
-    overlay.innerHTML = '';
-  }, 3500);
+  document.body.appendChild(overlay);
+  setTimeout(() => overlay.remove(), 3500);
+}
+
+function resetChecklist() {
+  localStorage.removeItem('checklistState');
+  renderChecklist();
+  showToast('✅ 材料清单已重置');
 }
 
 // ==================== FEATURE 2: COST CALCULATOR ====================
@@ -1809,7 +1911,7 @@ function calculateCost() {
 }
 
 // ==================== FEATURE 3: FLOATING ASSISTANT ====================
-const BUBBLE_MESSAGES = {
+const DEFAULT_BUBBLE_MESSAGES = {
   home: '👋 准备好出差了吗？先看看需要哪些材料吧！',
   process: '💡 小贴士：餐补和交通费各100元/天，记得彩印发票并在每页签名哦！',
   downloads: '📥 别忘了下载审批表和超标准乘坐审批表！',
@@ -1817,67 +1919,48 @@ const BUBBLE_MESSAGES = {
   default: '✨ 报销顺利！有任何问题随时查看流程指南～'
 };
 
+let bubbleMessages = loadData('bubbleMessages', DEFAULT_BUBBLE_MESSAGES);
 let bubbleHidden = false;
-
 let checklistHidden = false;
 let floatObserver = null;
 
 function initAssistant() {
   const sections = ['home', 'process', 'downloads', 'notices'];
-
-  // Observer for text content switching
   const textObserver = new IntersectionObserver((entries) => {
     if (bubbleHidden) return;
     let activeSection = 'default';
-    entries.forEach(entry => {
-      if (entry.isIntersecting) activeSection = entry.target.id;
-    });
+    entries.forEach(entry => { if (entry.isIntersecting) activeSection = entry.target.id; });
     for (const id of sections) {
       const el = document.getElementById(id);
-      if (el) {
-        const rect = el.getBoundingClientRect();
-        if (rect.top < window.innerHeight * 0.6) activeSection = id;
-      }
+      if (el) { const rect = el.getBoundingClientRect(); if (rect.top < window.innerHeight * 0.6) activeSection = id; }
     }
     updateBubbleText(activeSection);
   }, { threshold: [0, 0.2, 0.5] });
-  sections.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) textObserver.observe(el);
-  });
+  sections.forEach(id => { const el = document.getElementById(id); if (el) textObserver.observe(el); });
 
-  // Observer for showing/hiding float elements (only from downloads page onward)
   floatObserver = new IntersectionObserver((entries) => {
     const checklist = document.getElementById('checklistFloat');
     const bubble = document.getElementById('assistantBubble');
     let visible = false;
-    entries.forEach(entry => {
-      if (entry.isIntersecting) visible = true;
-    });
+    entries.forEach(entry => { if (entry.isIntersecting) visible = true; });
     if (checklist) checklist.style.display = (visible && !checklistHidden) ? 'block' : 'none';
     if (bubble) bubble.style.display = (visible && !bubbleHidden) ? 'flex' : 'none';
   }, { threshold: 0.1 });
-
   const downloadsEl = document.getElementById('downloads');
   const noticesEl = document.getElementById('notices');
   if (downloadsEl) floatObserver.observe(downloadsEl);
   if (noticesEl) floatObserver.observe(noticesEl);
-
-  // Initially hide both (they'll show when user scrolls to downloads)
   document.getElementById('checklistFloat').style.display = 'none';
   document.getElementById('assistantBubble').style.display = 'none';
 }
 
 function updateBubbleText(section) {
   const textEl = document.getElementById('bubbleText');
-  if (textEl) {
-    textEl.textContent = BUBBLE_MESSAGES[section] || BUBBLE_MESSAGES.default;
-  }
+  if (textEl) textEl.textContent = bubbleMessages[section] || bubbleMessages.default;
 }
 
 function dismissBubble() {
-  // Rotate through tips on click
-  const tips = Object.values(BUBBLE_MESSAGES);
+  const tips = Object.values(bubbleMessages);
   const current = document.getElementById('bubbleText').textContent;
   let idx = tips.indexOf(current);
   idx = (idx + 1) % tips.length;
@@ -1887,33 +1970,51 @@ function dismissBubble() {
 function hideBubble() {
   bubbleHidden = true;
   document.getElementById('assistantBubble').style.display = 'none';
-  // Re-show after 2 minutes
   setTimeout(() => {
     bubbleHidden = false;
     const downloadsEl = document.getElementById('downloads');
-    if (downloadsEl) {
-      const rect = downloadsEl.getBoundingClientRect();
-      if (rect.top < window.innerHeight) {
-        document.getElementById('assistantBubble').style.display = 'flex';
-      }
-    }
+    if (downloadsEl) { const rect = downloadsEl.getBoundingClientRect(); if (rect.top < window.innerHeight) document.getElementById('assistantBubble').style.display = 'flex'; }
   }, 120000);
 }
 
 function hideChecklist() {
   checklistHidden = true;
   document.getElementById('checklistFloat').style.display = 'none';
-  // Re-show after 2 minutes
   setTimeout(() => {
     checklistHidden = false;
     const downloadsEl = document.getElementById('downloads');
-    if (downloadsEl) {
-      const rect = downloadsEl.getBoundingClientRect();
-      if (rect.top < window.innerHeight) {
-        document.getElementById('checklistFloat').style.display = 'block';
-      }
-    }
+    if (downloadsEl) { const rect = downloadsEl.getBoundingClientRect(); if (rect.top < window.innerHeight) document.getElementById('checklistFloat').style.display = 'block'; }
   }, 120000);
+}
+
+// Admin functions for bubble messages
+function renderAdminBubble() {
+  const container = document.getElementById('adminBubbleList');
+  if (!container) return;
+  const sections = ['home', 'process', 'downloads', 'notices', 'default'];
+  const labels = { home: '首页', process: '流程指南', downloads: '文件下载', notices: '注意事项', default: '默认' };
+  container.innerHTML = sections.map(key => `
+    <div style="margin-bottom:12px;padding:12px;background:#fff;border-radius:var(--radius-sm);border:1px solid #e0e0e0;">
+      <label style="font-weight:600;display:block;margin-bottom:4px;color:var(--brand-color-forest);">💬 ${labels[key]}（${key}）</label>
+      <input type="text" value="${(bubbleMessages[key] || '').replace(/"/g, '&quot;')}" data-bubble-key="${key}"
+        style="width:100%;padding:10px;border:1.5px solid var(--color-border-light);border-radius:var(--radius-sm);font-size:0.9rem;">
+    </div>`).join('') + '<button class="btn btn-primary btn-sm" onclick="saveBubbleMessages()" style="margin-top:8px;"><i class="fa-solid fa-save"></i> 保存提示文字</button>';
+}
+
+function saveBubbleMessages() {
+  const inputs = document.querySelectorAll('#adminBubbleList input');
+  inputs.forEach(inp => { bubbleMessages[inp.dataset.bubbleKey] = inp.value; });
+  saveData('bubbleMessages', bubbleMessages);
+  refreshAll();
+  showToast('✅ 小助手提示文字已更新！');
+}
+
+function resetBubbleMessages() {
+  if (!confirm('确定恢复默认提示文字？')) return;
+  bubbleMessages = { ...DEFAULT_BUBBLE_MESSAGES };
+  saveData('bubbleMessages', bubbleMessages);
+  renderAdminBubble();
+  showToast('✅ 提示文字已恢复默认');
 }
 
 // ==================== INIT ====================
