@@ -593,26 +593,9 @@ body::after {
       <h2>报销核心步骤</h2>
       <p>从赛前材料准备到最终报销完成，四步走通全流程</p>
     </div>
-    <div class="steps-row">
-      <div class="step-card">
-        <div class="step-number">1</div>
-        <h3>赛前准备</h3>
-        <p>填写审批表、准备红头文件、入围证明、飞机票审批</p>
-      </div>
-      <div class="step-card">
-        <div class="step-number">2</div>
-        <h3>提交辅导员</h3>
-        <p>将所有材料整理齐全，交给本队辅导员审核与签字</p>
-      </div>
-      <div class="step-card">
-        <div class="step-number">3</div>
-        <h3>学院审批</h3>
-        <p>辅导员统一提交大队 → 学院财务审批 → 经费下拨</p>
-      </div>
-      <div class="step-card">
-        <div class="step-number">4</div>
-        <h3>报销完成</h3>
-        <p>审批通过后按要求提交发票，完成报销流程</p>
+    <div class="steps-row" id="stepsRow">
+      <!-- Dynamically rendered by JS -->
+
       </div>
     </div>
 
@@ -683,13 +666,13 @@ body::after {
       </div>
       <div class="phase-content" id="phase2Content">
         <ol>
-          <li><strong>餐补与交通费：</strong>餐补和交通费合计每人每天 <strong>100 元</strong>。有餐补的不再报销餐费；无餐补的每日报销 100 元（包含餐费和市内交通费）。</li>
+          <li><strong>餐补与交通费：</strong>伙食费（餐补）每人每天 <strong>100 元</strong>，交通费每人每天 <strong>100 元</strong>。有餐补的不再报销餐费。</li>
           <li><strong>酒店发票：</strong>需提前联系酒店前台，将电子发票发至个人邮箱；打印后须<strong>彩印</strong>，并在每页右下角<strong>签署个人姓名</strong>。</li>
           <li><strong>会务费 / 交通费：</strong>可报销，须提供相应的正规发票。</li>
           <li><strong>团队多人报销：</strong>统一只提供一个银行卡号，所有款项汇入该卡。最后需列表汇总：每个人的去程费用、返程费用、酒店费用及实际总报销金额。</li>
         </ol>
 
-        <h4 style="margin-top:24px;margin-bottom:12px;font-family:var(--font-heading);color:var(--brand-color-forest);">🏨 住宿费限额参考表（单位：元/天）</h4>
+        <h4 style="margin-top:24px;margin-bottom:12px;font-family:var(--font-heading);color:var(--brand-color-forest);">🏨 住宿费限额参考表（单位：元/天 · 2人一间）</h4>
         <div class="accom-table-wrap">
           <table class="accom-table" id="accomTable">
             <thead>
@@ -801,7 +784,12 @@ body::after {
 
     <!-- Tab: File Upload -->
     <div class="admin-tab-content" id="tabFiles">
-      <p style="color:#888;margin-bottom:16px;">上传新文件（模拟），新文件将自动出现在前台文件下载页面。</p>
+      <p style="color:#888;margin-bottom:16px;">管理已有文件（编辑/删除），或上传新文件。支持真实文件上传（存储在浏览器 IndexedDB 中），所有修改自动同步到前台下载页面。</p>
+
+      <h4 style="font-family:var(--font-heading);margin-bottom:12px;color:var(--brand-color-forest);">📂 当前文件列表（点击编辑或删除）</h4>
+      <div id="adminFilesList" style="margin-bottom:var(--space-lg);"></div>
+
+      <h4 style="font-family:var(--font-heading);margin-bottom:12px;color:var(--brand-color-forest);">➕ 上传新文件</h4>
       <div class="inline-add">
         <div class="form-row">
           <input type="text" id="newFileName" placeholder="文件名称（例如：新版出差审批表）">
@@ -815,15 +803,58 @@ body::after {
             <option value="other">其他材料</option>
           </select>
           <input type="text" id="newFileIcon" placeholder="Font Awesome 图标（例如：fa-file-pdf）" value="fa-file-pdf">
-          <input type="text" id="newFileRealPath" placeholder="真实文件名（可选，如：报销表.xlsx，留空则模拟下载）">
         </div>
-        <button class="btn btn-primary btn-sm" onclick="uploadFile()"><i class="fa-solid fa-upload"></i> 上传文件（模拟）</button>
+        <div class="form-row" style="align-items:center;">
+          <label style="font-weight:600;white-space:nowrap;font-size:0.9rem;">📎 真实文件：</label>
+          <input type="file" id="newFileInput" style="padding:8px;border:1.5px solid var(--color-border-light);border-radius:var(--radius-sm);font-size:0.85rem;flex:1;">
+          <span style="font-size:0.75rem;color:#999;">（可选，选择后文件将存入浏览器数据库）</span>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="uploadFile()"><i class="fa-solid fa-upload"></i> 上传文件</button>
+      </div>
+
+      <!-- Edit File Modal -->
+      <div id="editFileModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10000;align-items:center;justify-content:center;">
+        <div style="background:#fff;border-radius:var(--radius-lg);padding:var(--space-lg);max-width:560px;width:90%;max-height:85vh;overflow-y:auto;">
+          <h3 style="font-family:var(--font-heading);color:var(--brand-color-forest);margin-bottom:var(--space-md);">✏️ 编辑文件信息</h3>
+          <input type="hidden" id="editFileIdx">
+          <div class="form-row"><input type="text" id="editFileName" placeholder="文件名称"></div>
+          <div class="form-row"><input type="text" id="editFileDesc" placeholder="文件描述"></div>
+          <div class="form-row">
+            <select id="editFileCategory" style="padding:10px 14px;border:1.5px solid var(--color-border-light);border-radius:var(--radius-sm);font-size:0.9rem;">
+              <option value="approval">审批表格</option>
+              <option value="other">其他材料</option>
+            </select>
+            <input type="text" id="editFileIcon" placeholder="Font Awesome 图标">
+          </div>
+          <div class="form-row" style="align-items:center;">
+            <label style="font-weight:600;white-space:nowrap;font-size:0.9rem;">📎 替换文件：</label>
+            <input type="file" id="editFileInput" style="padding:8px;border:1.5px solid var(--color-border-light);border-radius:var(--radius-sm);font-size:0.85rem;flex:1;">
+            <span style="font-size:0.75rem;color:#999;">（可选，重新选择文件）</span>
+          </div>
+          <div class="admin-actions">
+            <button class="btn btn-primary btn-sm" onclick="saveEditFile()"><i class="fa-solid fa-save"></i> 保存修改</button>
+            <button class="btn btn-secondary btn-sm" onclick="closeEditFileModal()">取消</button>
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- Tab: Edit Notices -->
     <div class="admin-tab-content" id="tabNotices">
-      <p style="color:#888;margin-bottom:16px;">管理注意事项列表，可删除已有条目或批量重置。</p>
+      <p style="color:#888;margin-bottom:16px;">添加新注意事项、删除已有条目或批量重置。</p>
+
+      <h4 style="font-family:var(--font-heading);margin-bottom:12px;color:var(--brand-color-forest);">➕ 添加新注意事项</h4>
+      <div class="inline-add" style="margin-bottom:var(--space-lg);">
+        <div class="form-row">
+          <input type="text" id="adminNoticeTitle" placeholder="标题（例如：新版发票抬头要求）">
+        </div>
+        <div class="form-row">
+          <textarea id="adminNoticeDesc" rows="2" placeholder="详细描述..." style="flex:1;min-width:200px;padding:10px 14px;border:1.5px solid var(--color-border-light);border-radius:var(--radius-sm);font-family:var(--font-body);font-size:0.9rem;"></textarea>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="addNoticeFromAdmin()"><i class="fa-solid fa-plus-circle"></i> 添加注意事项</button>
+      </div>
+
+      <h4 style="font-family:var(--font-heading);margin-bottom:12px;color:var(--brand-color-forest);">📋 现有注意事项列表</h4>
       <div id="adminNoticesList"></div>
       <div class="admin-actions">
         <button class="btn btn-primary btn-sm" onclick="resetNotices()"><i class="fa-solid fa-rotate-left"></i> 恢复默认注意事项</button>
@@ -890,7 +921,7 @@ const DEFAULT_ACCOM = [
 const DEFAULT_NOTICES = [
   { title: '发票彩印要求', desc: '所有报销发票必须彩色打印，黑白打印件不予受理。请使用彩色打印机输出后再提交。' },
   { title: '发票签名规范', desc: '每页发票右下角须用黑色签字笔签署报销人姓名，不得使用铅笔或蓝色笔。' },
-  { title: '餐补与交通费说明', desc: '餐补和交通费合计每人每天100元。有餐补的不再报销餐费。超标准部分自行承担。' },
+  { title: '餐补与交通费说明', desc: '伙食费（餐补）每人每天100元，交通费每人每天100元。有餐补的不再报销餐费。超标准部分自行承担。' },
   { title: '报销时效提醒', desc: '出差结束后30日内须提交全部报销材料，逾期将影响财务审批进度。' },
   { title: '团队报销银行卡要求', desc: '多人团队报销统一提供一个银行卡号，所有费用汇入该卡。最后须列表汇总每人各项费用明细。' },
   { title: '勤俭节约通知', desc: '一个团队原则上只由汇报人出差。如需多人同行，带队老师须出具书面材料说明必要性。' },
@@ -920,6 +951,61 @@ function loadData(key, defaultData) {
   } catch(e) { return defaultData; }
 }
 function saveData(key, data) { localStorage.setItem(key, JSON.stringify(data)); }
+
+// ==================== INDEXEDDB FOR FILE STORAGE ====================
+const DB_NAME = 'ReimbursementFilesDB';
+const DB_STORE = 'files';
+let db = null;
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    if (db) return resolve(db);
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = (e) => { e.target.result.createObjectStore(DB_STORE, { keyPath: 'id' }); };
+    req.onsuccess = (e) => { db = e.target.result; resolve(db); };
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function storeFileInDB(id, file) {
+  const d = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = d.transaction(DB_STORE, 'readwrite');
+    tx.objectStore(DB_STORE).put({ id, file, name: file.name, type: file.type, size: file.size });
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function getFileFromDB(id) {
+  const d = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = d.transaction(DB_STORE, 'readonly');
+    const req = tx.objectStore(DB_STORE).get(id);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function deleteFileFromDB(id) {
+  const d = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = d.transaction(DB_STORE, 'readwrite');
+    tx.objectStore(DB_STORE).delete(id);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function clearAllFilesFromDB() {
+  const d = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = d.transaction(DB_STORE, 'readwrite');
+    tx.objectStore(DB_STORE).clear();
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
 
 // ==================== INIT DATA ====================
 let accomData     = loadData('accomData', DEFAULT_ACCOM);
@@ -951,16 +1037,19 @@ function renderFileCards() {
   const approvalFiles = fileData.filter(f => f.category === 'approval');
   const otherFiles = fileData.filter(f => f.category === 'other');
   const cardHTML = f => {
-    const clickHandler = f.realPath
-      ? `downloadFile('${f.realPath}', '${f.name}')`
-      : `simulateDownload('${f.name}')`;
-    const badge = f.realPath ? '<span style="display:inline-block;background:#40916C;color:#fff;font-size:0.7rem;padding:2px 8px;border-radius:10px;margin-left:6px;">真实文件</span>' : '';
+    const hasReal = !!(f.storedId || f.realPath);
+    const storedId = f.storedId ? `'${f.storedId}'` : 'null';
+    const realPath = f.realPath ? `'${f.realPath}'` : 'null';
+    const clickHandler = hasReal
+      ? `downloadFile(${realPath}, '${f.name.replace(/'/g, "\\'")}', ${storedId})`
+      : `simulateDownload('${f.name.replace(/'/g, "\\'")}')`;
+    const badge = f.storedId ? '<span style="display:inline-block;background:#40916C;color:#fff;font-size:0.7rem;padding:2px 8px;border-radius:10px;margin-left:6px;">已存储</span>' : (f.realPath ? '<span style="display:inline-block;background:#40916C;color:#fff;font-size:0.7rem;padding:2px 8px;border-radius:10px;margin-left:6px;">真实文件</span>' : '');
     return `
     <div class="file-card" onclick="${clickHandler}">
       <div class="file-icon"><i class="fa-solid ${f.icon}"></i></div>
       <h4>${f.name}${badge}</h4>
       <p>${f.desc}</p>
-      <span class="file-dl-btn"><i class="fa-solid fa-download"></i> ${f.realPath ? '下载文件' : '下载（模拟）'}</span>
+      <span class="file-dl-btn"><i class="fa-solid fa-download"></i> ${hasReal ? '下载文件' : '下载（模拟）'}</span>
     </div>`;
   };
   approvalDiv.innerHTML = approvalFiles.map(cardHTML).join('') || '<p style="color:#999;">暂无审批表格文件</p>';
@@ -978,13 +1067,14 @@ function renderNotices() {
 }
 
 function renderSteps() {
-  const cards = document.querySelectorAll('.step-card');
-  cards.forEach((card, i) => {
-    if (i < stepsData.length) {
-      card.querySelector('h3').textContent = stepsData[i].title;
-      card.querySelector('p').textContent = stepsData[i].desc;
-    }
-  });
+  const container = document.getElementById('stepsRow');
+  if (!container) return;
+  container.innerHTML = stepsData.map((s, i) => `
+    <div class="step-card">
+      <div class="step-number">${i + 1}</div>
+      <h3>${s.title}</h3>
+      <p>${s.desc}</p>
+    </div>`).join('');
 }
 
 function renderAdminNotices() {
@@ -1002,14 +1092,19 @@ function renderAdminStepsEditor() {
   const editor = document.getElementById('adminStepsEditor');
   if (!editor) return;
   editor.innerHTML = stepsData.map((s, i) => `
-    <div style="margin-bottom:16px;padding:16px;background:#fff;border-radius:var(--radius-sm);border:1px solid #e0e0e0;">
-      <label style="font-weight:600;display:block;margin-bottom:4px;color:var(--brand-color-forest);">步骤 ${i + 1} 标题</label>
+    <div style="margin-bottom:16px;padding:16px;background:#fff;border-radius:var(--radius-sm);border:1px solid #e0e0e0;position:relative;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <span style="font-weight:700;color:var(--brand-color-forest);">步骤 ${i + 1}</span>
+        <button class="btn btn-xs btn-secondary" style="color:#c0392b;border-color:#c0392b;" onclick="deleteStep(${i})"><i class="fa-solid fa-trash"></i> 删除</button>
+      </div>
+      <label style="font-weight:600;display:block;margin-bottom:4px;color:var(--brand-color-forest);">标题</label>
       <input type="text" value="${s.title.replace(/"/g,'&quot;')}" data-step-idx="${i}" data-step-field="title"
         style="width:100%;padding:10px;margin-bottom:8px;border:1.5px solid var(--color-border-light);border-radius:var(--radius-sm);font-size:0.9rem;">
       <label style="font-weight:600;display:block;margin-bottom:4px;color:var(--brand-color-forest);">描述</label>
       <input type="text" value="${s.desc.replace(/"/g,'&quot;')}" data-step-idx="${i}" data-step-field="desc"
         style="width:100%;padding:10px;border:1.5px solid var(--color-border-light);border-radius:var(--radius-sm);font-size:0.9rem;">
-    </div>`).join('');
+    </div>`).join('')
+    + `<button class="btn btn-primary btn-sm" onclick="addStep()" style="margin-top:8px;width:100%;"><i class="fa-solid fa-plus"></i> 添加新步骤</button>`;
 }
 
 function refreshAccomEditor() {
@@ -1024,6 +1119,7 @@ function refreshAll() {
   renderSteps();
   renderAdminNotices();
   renderAdminStepsEditor();
+  renderAdminFiles();
   refreshAccomEditor();
   updateAdminVisibility();
 }
@@ -1033,15 +1129,38 @@ function simulateDownload(name) {
   showToast(`📥 正在准备下载：${name}（模拟下载 — 请从审批材料文件夹中手动获取）`);
 }
 
-function downloadFile(realPath, name) {
-  // Create a link to the real file (same folder)
-  const link = document.createElement('a');
-  link.href = realPath;
-  link.download = realPath;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  showToast(`✅ 正在下载：${name}`);
+async function downloadFile(realPath, name, storedId) {
+  if (storedId) {
+    // Retrieve from IndexedDB
+    try {
+      const stored = await getFileFromDB(storedId);
+      if (stored && stored.file) {
+        const url = URL.createObjectURL(stored.file);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = stored.name || name;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        showToast(`✅ 正在下载：${stored.name || name}`);
+        return;
+      }
+    } catch(e) {
+      showToast('⚠️ 从数据库读取失败，尝试备用方式...');
+    }
+  }
+  if (realPath) {
+    const link = document.createElement('a');
+    link.href = realPath;
+    link.download = realPath;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast(`✅ 正在下载：${name}`);
+  } else {
+    showToast(`📥 正在准备下载：${name}（模拟下载）`);
+  }
 }
 
 // ==================== ADD NOTICE ====================
@@ -1055,6 +1174,19 @@ function addNotice() {
   document.getElementById('noticeDesc').value = '';
   refreshAll();
   showToast('✅ 注意事项已发布！');
+}
+
+// ==================== ADD NOTICE FROM ADMIN ====================
+function addNoticeFromAdmin() {
+  const title = document.getElementById('adminNoticeTitle').value.trim();
+  const desc = document.getElementById('adminNoticeDesc').value.trim();
+  if (!title || !desc) { showToast('⚠️ 请填写标题和描述'); return; }
+  noticeData.unshift({ title, desc });
+  saveData('noticeData', noticeData);
+  document.getElementById('adminNoticeTitle').value = '';
+  document.getElementById('adminNoticeDesc').value = '';
+  refreshAll();
+  showToast('✅ 注意事项已添加！');
 }
 
 // ==================== DELETE NOTICE ====================
@@ -1088,6 +1220,22 @@ function saveSteps() {
   showToast('✅ 流程步骤已保存！');
 }
 
+function addStep() {
+  stepsData.push({ title: '新步骤', desc: '请填写此步骤的描述' });
+  saveData('stepsData', stepsData);
+  refreshAll();
+  showToast('✅ 新步骤已添加，请编辑内容后保存！');
+}
+
+function deleteStep(idx) {
+  if (stepsData.length <= 1) { showToast('⚠️ 至少保留一个步骤'); return; }
+  if (!confirm(`确定删除步骤"${stepsData[idx].title}"？`)) return;
+  stepsData.splice(idx, 1);
+  saveData('stepsData', stepsData);
+  refreshAll();
+  showToast('🗑️ 步骤已删除');
+}
+
 // ==================== SAVE ACCOMMODATION ====================
 function saveAccommodation() {
   try {
@@ -1114,27 +1262,115 @@ function resetAccommodation() {
 }
 
 // ==================== UPLOAD FILE ====================
-function uploadFile() {
+async function uploadFile() {
   const name = document.getElementById('newFileName').value.trim();
   const desc = document.getElementById('newFileDesc').value.trim();
   const category = document.getElementById('newFileCategory').value;
   const icon = document.getElementById('newFileIcon').value.trim() || 'fa-file';
-  const realPath = document.getElementById('newFileRealPath').value.trim();
+  const fileInput = document.getElementById('newFileInput');
   if (!name || !desc) { showToast('⚠️ 请填写文件名称和描述'); return; }
   const newFile = { name, desc, category, icon };
-  if (realPath) newFile.realPath = realPath;
+  const realFile = fileInput && fileInput.files[0];
+  if (realFile) {
+    const storedId = 'file_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+    newFile.storedId = storedId;
+    newFile.storedName = realFile.name;
+    newFile.storedType = realFile.type;
+    try {
+      await storeFileInDB(storedId, realFile);
+    } catch(e) {
+      showToast('⚠️ 文件存储失败：' + e.message);
+      return;
+    }
+  }
   fileData.push(newFile);
   saveData('fileData', fileData);
   document.getElementById('newFileName').value = '';
   document.getElementById('newFileDesc').value = '';
-  document.getElementById('newFileRealPath').value = '';
+  if (fileInput) fileInput.value = '';
   refreshAll();
-  showToast(realPath ? '✅ 文件已上传并关联真实文件！' : '✅ 文件已上传（模拟）！');
+  showToast(realFile ? '✅ 文件已上传并存入数据库！' : '✅ 文件信息已添加（无真实文件）！');
+}
+
+// ==================== RENDER / EDIT / DELETE FILES (ADMIN) ====================
+function renderAdminFiles() {
+  const container = document.getElementById('adminFilesList');
+  if (!container) return;
+  if (fileData.length === 0) {
+    container.innerHTML = '<p style="color:#999;">暂无文件，请上传新文件。</p>';
+    return;
+  }
+  container.innerHTML = fileData.map((f, i) => `
+    <div class="notice-item" style="align-items:center;">
+      <div class="file-icon" style="font-size:1.4rem;color:var(--brand-color-moss);margin-right:4px;"><i class="fa-solid ${f.icon}"></i></div>
+      <div style="flex:1;">
+        <strong>${f.name}</strong>
+        <span style="font-size:0.75rem;color:#999;margin-left:8px;">${f.category === 'approval' ? '审批表格' : '其他材料'}</span>
+        ${f.storedId ? '<span style="font-size:0.7rem;background:#40916C;color:#fff;padding:1px 7px;border-radius:8px;margin-left:6px;">已存储</span>' : (f.realPath ? '<span style="font-size:0.7rem;background:#40916C;color:#fff;padding:1px 7px;border-radius:8px;margin-left:6px;">本地文件</span>' : '<span style="font-size:0.7rem;background:#ccc;color:#666;padding:1px 7px;border-radius:8px;margin-left:6px;">无文件</span>')}
+        <br><span style="font-size:0.8rem;color:#888;">${f.desc}</span>
+      </div>
+      <button class="btn btn-xs btn-secondary" style="color:var(--brand-color-moss);" onclick="openEditFileModal(${i})"><i class="fa-solid fa-pen"></i> 编辑</button>
+      <button class="btn btn-xs btn-secondary" style="color:#c0392b;" onclick="deleteFile(${i})"><i class="fa-solid fa-trash"></i> 删除</button>
+    </div>`).join('');
+}
+
+function openEditFileModal(idx) {
+  const f = fileData[idx];
+  if (!f) return;
+  document.getElementById('editFileIdx').value = idx;
+  document.getElementById('editFileName').value = f.name;
+  document.getElementById('editFileDesc').value = f.desc;
+  document.getElementById('editFileCategory').value = f.category;
+  document.getElementById('editFileIcon').value = f.icon || 'fa-file';
+  document.getElementById('editFileRealPath').value = f.realPath || '';
+  document.getElementById('editFileModal').style.display = 'flex';
+}
+
+function closeEditFileModal() {
+  document.getElementById('editFileModal').style.display = 'none';
+}
+
+function saveEditFile() {
+  const idx = parseInt(document.getElementById('editFileIdx').value);
+  if (isNaN(idx) || !fileData[idx]) return;
+  fileData[idx].name = document.getElementById('editFileName').value.trim();
+  fileData[idx].desc = document.getElementById('editFileDesc').value.trim();
+  fileData[idx].category = document.getElementById('editFileCategory').value;
+  fileData[idx].icon = document.getElementById('editFileIcon').value.trim() || 'fa-file';
+  // Handle file replacement
+  const fileInput = document.getElementById('editFileInput');
+  if (fileInput && fileInput.files[0]) {
+    const realFile = fileInput.files[0];
+    const storedId = 'file_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+    // Delete old stored file if exists
+    if (fileData[idx].storedId) { deleteFileFromDB(fileData[idx].storedId).catch(() => {}); }
+    fileData[idx].storedId = storedId;
+    fileData[idx].storedName = realFile.name;
+    fileData[idx].storedType = realFile.type;
+    delete fileData[idx].realPath;
+    storeFileInDB(storedId, realFile).catch(e => showToast('⚠️ 文件替换存储失败：' + e.message));
+  }
+  saveData('fileData', fileData);
+  closeEditFileModal();
+  refreshAll();
+  showToast('✅ 文件信息已更新！');
+}
+
+async function deleteFile(idx) {
+  if (!confirm(`确定删除文件"${fileData[idx].name}"？`)) return;
+  // Remove from IndexedDB if stored
+  if (fileData[idx].storedId) {
+    try { await deleteFileFromDB(fileData[idx].storedId); } catch(e) {}
+  }
+  fileData.splice(idx, 1);
+  saveData('fileData', fileData);
+  refreshAll();
+  showToast('🗑️ 文件已删除');
 }
 
 // ==================== RESET ALL ====================
 function resetAll() {
-  if (!confirm('⚠️ 确定重置所有数据为默认值？\n\n这将清除：流程步骤、住宿标准、注意事项、文件列表。\n此操作不可撤销！')) return;
+  if (!confirm('⚠️ 确定重置所有数据为默认值？\n\n这将清除：流程步骤、住宿标准、注意事项、文件列表、已上传文件。\n此操作不可撤销！')) return;
   accomData  = [...DEFAULT_ACCOM];
   noticeData = [...DEFAULT_NOTICES];
   fileData   = [...DEFAULT_FILES];
@@ -1143,6 +1379,7 @@ function resetAll() {
   saveData('noticeData', noticeData);
   saveData('fileData', fileData);
   saveData('stepsData', stepsData);
+  clearAllFilesFromDB().catch(() => {});
   refreshAll();
   showToast('✅ 全部数据已恢复默认值');
 }
@@ -1165,15 +1402,26 @@ function updateAdminVisibility() {
 }
 
 function toggleAdmin() {
-  isAdminMode = !isAdminMode;
-  saveData('isAdminMode', isAdminMode);
-  updateAdminVisibility();
-  refreshAll();
   if (isAdminMode) {
-    document.getElementById('adminPanel').scrollIntoView({ behavior: 'smooth' });
-    showToast('🔓 已进入教师管理模式');
-  } else {
+    // Exiting admin mode
+    isAdminMode = false;
+    saveData('isAdminMode', false);
+    updateAdminVisibility();
+    refreshAll();
     showToast('🔒 已退出教师管理模式');
+  } else {
+    // Entering admin mode — require password
+    const pw = prompt('请输入教师管理密码：');
+    if (pw === '20260806') {
+      isAdminMode = true;
+      saveData('isAdminMode', true);
+      updateAdminVisibility();
+      refreshAll();
+      document.getElementById('adminPanel').scrollIntoView({ behavior: 'smooth' });
+      showToast('🔓 已进入教师管理模式');
+    } else if (pw !== null) {
+      alert('密码错误，无法进入教师管理！');
+    }
   }
 }
 
