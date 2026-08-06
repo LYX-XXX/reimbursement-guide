@@ -665,7 +665,7 @@ body::after {
           <li><strong>飞机票审批：</strong>如需乘坐飞机，须满足以下条件 ——
             <ul style="margin-top:6px;">
               <li>填写《超标准乘坐交通工具审批表》（去程和返程各一份）；</li>
-              <li>飞机票价格须比当天高铁二等座便宜，提供比价截图作为证明。</li>
+              <li>飞机票价格须比当天高铁二等座便宜，提供比价截图（提交给辅导员）。</li>
             </ul>
           </li>
         </ol>
@@ -683,7 +683,7 @@ body::after {
       </div>
       <div class="phase-content" id="phase2Content">
         <ol>
-          <li><strong>餐补与交通费：</strong>餐补和交通费合计每人每天 <strong>100 元包干</strong>。有餐补的不再报销餐费；无餐补的每日报销 100 元（包含餐费和市内交通费）。</li>
+          <li><strong>餐补与交通费：</strong>餐补和交通费合计每人每天 <strong>100 元</strong>。有餐补的不再报销餐费；无餐补的每日报销 100 元（包含餐费和市内交通费）。</li>
           <li><strong>酒店发票：</strong>需提前联系酒店前台，将电子发票发至个人邮箱；打印后须<strong>彩印</strong>，并在每页右下角<strong>签署个人姓名</strong>。</li>
           <li><strong>会务费 / 交通费：</strong>可报销，须提供相应的正规发票。</li>
           <li><strong>团队多人报销：</strong>统一只提供一个银行卡号，所有款项汇入该卡。最后需列表汇总：每个人的去程费用、返程费用、酒店费用及实际总报销金额。</li>
@@ -890,23 +890,18 @@ const DEFAULT_ACCOM = [
 const DEFAULT_NOTICES = [
   { title: '发票彩印要求', desc: '所有报销发票必须彩色打印，黑白打印件不予受理。请使用彩色打印机输出后再提交。' },
   { title: '发票签名规范', desc: '每页发票右下角须用黑色签字笔签署报销人姓名，不得使用铅笔或蓝色笔。' },
-  { title: '餐补与交通费包干说明', desc: '餐补和交通费合计每人每天100元包干。有餐补的不再报销餐费。超标准部分自行承担。' },
+  { title: '餐补与交通费说明', desc: '餐补和交通费合计每人每天100元。有餐补的不再报销餐费。超标准部分自行承担。' },
   { title: '报销时效提醒', desc: '出差结束后30日内须提交全部报销材料，逾期将影响财务审批进度。' },
   { title: '团队报销银行卡要求', desc: '多人团队报销统一提供一个银行卡号，所有费用汇入该卡。最后须列表汇总每人各项费用明细。' },
   { title: '勤俭节约通知', desc: '一个团队原则上只由汇报人出差。如需多人同行，带队老师须出具书面材料说明必要性。' },
-  { title: '机票比价要求', desc: '乘坐飞机须填写《超标准乘坐交通工具审批表》，并提供当天高铁二等座比价截图，飞机票价须低于高铁价。' }
+  { title: '机票比价要求', desc: '乘坐飞机须填写《超标准乘坐交通工具审批表》，并提供当天高铁二等座比价截图（提交给辅导员），飞机票价须低于高铁价。' }
 ];
 
 // --- Default files ---
 const DEFAULT_FILES = [
   { name: '因公出差审批表', desc: '赛前必填，须注明指导老师及电话，第一行备注带队老师', category: 'approval', icon: 'fa-file-excel', realPath: '因公出差审批表.xlsx' },
-  { name: '外出参加申请书', desc: '外出参赛须提交的正式申请书', category: 'approval', icon: 'fa-file-word', realPath: '外出参加申请书.docx' },
-  { name: '超标准乘坐交通工具审批表', desc: '乘坐飞机时去程和返程各需一份，附比价截图', category: 'approval', icon: 'fa-file-excel', realPath: '超标准乘坐交通工具审批表.xlsx' },
-  { name: '比赛红头文件模板', desc: '需包含赛事名称、时间、地点（模板参考）', category: 'approval', icon: 'fa-file-pdf' },
-  { name: '入围名单证明模板', desc: '官方截图或公示文件打印件（模板参考）', category: 'approval', icon: 'fa-file-image' },
-  { name: '团队报销汇总表', desc: '多人出差各项费用汇总模板', category: 'other', icon: 'fa-table' },
-  { name: '勤俭节约说明材料', desc: '多人同行情况须带队老师出具', category: 'other', icon: 'fa-file-word' },
-  { name: '报销流程图（高清）', desc: '完整报销流程一图看懂', category: 'other', icon: 'fa-diagram-project' }
+  { name: '超标准乘坐交通工具审批表', desc: '乘坐飞机时去程和返程各需一份', category: 'approval', icon: 'fa-file-excel', realPath: '超标准乘坐交通工具审批表.xlsx' },
+  { name: '外出参加申请书', desc: '多人同行情况须带队老师出具', category: 'other', icon: 'fa-file-word', realPath: '外出参加申请书.docx' }
 ];
 
 // --- Default steps ---
