@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>出差报销流程导航</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+/* ===== CSS Custom Properties (Design Tokens) ===== */
+:root {
+  /* Brand colors — 墨绿色 (dark green) palette */
+  --brand-color-forest:      #1B4332;   /* Deep forest green — primary */
+  --brand-color-pine:        #2D5A3F;   /* Pine green — hover/alt */
+  --brand-color-sage:        #52B788;   /* Sage — accents */
+  --brand-color-moss:        #40916C;   /* Moss — secondary accent */
+  --brand-color-olive:       #95D5B2;   /* Olive — light accents */
+  --brand-color-clay:        #E8D0A3;   /* Warm clay/gold — buttons (kept warm) */
+  --brand-color-silt:        #EEEDE7;   /* Warm light gray — bg sections */
+  --brand-color-sand:        #FBFBF9;   /* Off-white — cards */
+  --brand-color-nightfall:   #1A1C1A;   /* Near-black — dark text */
+  --brand-color-mist:        #D8E2DC;   /* Misty green-gray */
+
+  /* Functional */
+  --color-text-light:        #EEEDE7;
+  --color-text-dark:         #1A1C1A;
+  --color-text-brown:        #2D5A3F;
+  --color-card-bg:           #FBFBF9;
+  --color-card-shadow:       rgba(27, 67, 50, 0.35);
+  --color-card-shadow-light: rgba(27, 67, 50, 0.18);
+  --color-accent:            #40916C;
+  --color-bg-hero:           #1B4332;
+  --color-bg-content:        #EEEDE7;
+  --color-button-beige:      #E8D0A3;
+  --color-border-light:      #D8E2DC;
+
+  /* Typography */
+  --font-body:       'Segoe UI', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+  --font-heading:    'Georgia', 'Noto Serif SC', 'STSong', serif;
+  --font-mono:       'Cascadia Code', 'SF Mono', 'Fira Code', monospace;
+
+  /* Spacing scale */
+  --space-xs:  8px;
+  --space-sm:  16px;
+  --space-md:  24px;
+  --space-lg:  40px;
+  --space-xl:  60px;
+  --space-2xl: 120px;
+  --page-margin: 42px;
+  --max-width: 1280px;
+  --nav-height: 70px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+
+  /* Transitions */
+  --transition-fast: 0.15s ease;
+  --transition-medium: 0.3s ease;
+  --transition-slow: 0.5s cubic-bezier(0.3, 1, 0.7, 1);
+}
+
+/* ===== Reset & Base ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; scroll-padding-top: var(--nav-height); }
+body {
+  font-family: var(--font-body);
+  color: var(--color-text-dark);
+  background-color: var(--color-bg-content);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color var(--transition-slow);
+}
+a { color: inherit; text-decoration: none; }
+img { max-width: 100%; display: block; }
+
+/* ===== Grain Texture Overlay (tennr-inspired) ===== */
+body::after {
+  content: '';
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  width: 100vw; height: 100vh;
+  pointer-events: none; z-index: 9999;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+}
+
+/* ===== Navigation ===== */
+.site-header {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+  height: var(--nav-height);
+  background: rgba(27, 67, 50, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: background var(--transition-medium), box-shadow var(--transition-medium);
+}
+.site-header.scrolled {
+  background: rgba(27, 67, 50, 0.95);
+  box-shadow: 0 2px 20px rgba(0,0,0,0.15);
+}
+.nav-inner {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 var(--page-margin);
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.nav-logo {
+  font-family: var(--font-heading);
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--color-text-light);
+  display: flex; align-items: center; gap: 10px;
+  letter-spacing: 0.02em;
+}
+.nav-logo i { color: var(--brand-color-sage); font-size: 1.5rem; }
+.nav-links { display: flex; align-items: center; gap: 6px; list-style: none; }
+.nav-links a {
+  color: rgba(238, 237, 231, 0.75);
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 0.92rem;
+  font-weight: 500;
+  transition: color var(--transition-fast), background var(--transition-fast);
+  white-space: nowrap;
+}
+.nav-links a:hover, .nav-links a.active {
+  color: #fff;
+  background: rgba(255,255,255,0.08);
+}
+.nav-links a.nav-admin-btn {
+  background: var(--brand-color-sage);
+  color: var(--brand-color-forest) !important;
+  font-weight: 600;
+  padding: 8px 18px;
+  border-radius: var(--radius-sm);
+}
+.nav-links a.nav-admin-btn:hover {
+  background: #6BC89D;
+  color: var(--brand-color-forest) !important;
+}
+.hamburger {
+  display: none; background: none; border: none; cursor: pointer;
+  flex-direction: column; gap: 5px; padding: 8px;
+}
+.hamburger span {
+  width: 24px; height: 2px; background: var(--color-text-light);
+  border-radius: 2px; transition: all 0.3s;
+}
+.hamburger.open span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+.hamburger.open span:nth-child(2) { opacity: 0; }
+.hamburger.open span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
+
+/* ===== Hero Section ===== */
+.hero {
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  text-align: center;
+  background: linear-gradient(170deg, #1B4332 0%, #2D5A3F 40%, #1B4332 100%);
+  color: var(--color-text-light);
+  padding: calc(var(--nav-height) + 40px) var(--page-margin) 80px;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -40%; left: -20%;
+  width: 80%; height: 160%;
+  background: radial-gradient(ellipse at center, rgba(64,145,108,0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-inner { max-width: 800px; position: relative; z-index: 1; }
+.hero-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.8rem; letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--brand-color-sage);
+  margin-bottom: var(--space-md);
+}
+.hero h1 {
+  font-family: var(--font-heading);
+  font-size: clamp(2.2rem, 5vw, 4rem);
+  font-weight: 700;
+  line-height: 1.15;
+  margin-bottom: var(--space-md);
+  letter-spacing: -0.01em;
+}
+.hero p {
+  font-size: 1.15rem;
+  opacity: 0.85;
+  max-width: 560px;
+  margin: 0 auto var(--space-lg);
+  line-height: 1.6;
+}
+.hero-buttons { display: flex; gap: var(--space-sm); justify-content: center; flex-wrap: wrap; }
+
+/* ===== Fractal Button (tennr-inspired offset shadow) ===== */
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--font-body);
+  font-size: 0.9rem; font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 14px 28px;
+  border: none; border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+  text-decoration: none;
+}
+.btn-primary {
+  background: var(--color-button-beige);
+  color: var(--brand-color-forest);
+  box-shadow: 4px 4px 0 rgba(232,208,163,0.35), 8px 8px 0 rgba(232,208,163,0.15);
+}
+.btn-primary:hover {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 rgba(232,208,163,0.35), 4px 4px 0 rgba(232,208,163,0.15);
+}
+.btn-secondary {
+  background: transparent;
+  color: var(--color-text-light);
+  border: 1.5px solid rgba(238,237,231,0.3);
+}
+.btn-secondary:hover { background: rgba(255,255,255,0.06); border-color: rgba(238,237,231,0.55); }
+.btn-sm { padding: 10px 20px; font-size: 0.82rem; }
+.btn-xs { padding: 6px 14px; font-size: 0.75rem; }
+
+/* ===== Sections ===== */
+.section {
+  padding: var(--space-2xl) var(--page-margin);
+}
+.section-inner { max-width: var(--max-width); margin: 0 auto; }
+.section-header {
+  text-align: center; margin-bottom: var(--space-xl);
+}
+.section-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.78rem; letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--brand-color-moss);
+  margin-bottom: var(--space-xs);
+}
+.section-header h2 {
+  font-family: var(--font-heading);
+  font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+  color: var(--color-text-dark);
+  line-height: 1.2;
+  margin-bottom: var(--space-sm);
+}
+.section-header p {
+  color: #555;
+  max-width: 560px; margin: 0 auto;
+  font-size: 1.05rem;
+}
+
+/* ===== Steps Row ===== */
+.steps-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
+}
+.step-card {
+  background: var(--color-card-bg);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg) var(--space-md);
+  position: relative;
+  box-shadow: 4px 4px 0 var(--color-card-shadow-light), 8px 8px 0 rgba(27,67,50,0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  text-align: center;
+}
+.step-card:hover {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 var(--color-card-shadow-light), 4px 4px 0 rgba(27,67,50,0.08);
+}
+.step-number {
+  width: 44px; height: 44px;
+  background: var(--brand-color-forest);
+  color: var(--color-button-beige);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-heading);
+  font-size: 1.3rem; font-weight: 700;
+  margin: 0 auto var(--space-sm);
+}
+.step-card h3 {
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  margin-bottom: 6px;
+  color: var(--brand-color-forest);
+}
+.step-card p { font-size: 0.88rem; color: #666; line-height: 1.5; }
+
+/* ===== Entry Cards ===== */
+.entry-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-md);
+}
+.entry-card {
+  background: var(--color-card-bg);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  box-shadow: 4px 4px 0 var(--color-card-shadow-light), 8px 8px 0 rgba(27,67,50,0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  display: flex; flex-direction: column; gap: var(--space-sm);
+}
+.entry-card:hover {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 var(--color-card-shadow-light), 4px 4px 0 rgba(27,67,50,0.08);
+}
+.entry-card .card-icon {
+  width: 48px; height: 48px;
+  background: rgba(64,145,108,0.1);
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem; color: var(--brand-color-moss);
+}
+.entry-card h4 { font-family: var(--font-heading); font-size: 1rem; color: var(--brand-color-forest); }
+.entry-card p { font-size: 0.85rem; color: #777; line-height: 1.5; flex: 1; }
+
+/* ===== Process Phases ===== */
+.phase-section { margin-bottom: var(--space-xl); }
+.phase-header {
+  display: flex; align-items: center; gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+  padding-bottom: var(--space-sm);
+  border-bottom: 2px solid var(--brand-color-olive);
+}
+.phase-badge {
+  background: var(--brand-color-forest);
+  color: var(--color-button-beige);
+  font-weight: 700; font-size: 0.85rem;
+  padding: 6px 18px; border-radius: 20px;
+  white-space: nowrap;
+}
+.phase-header h3 {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  color: var(--brand-color-forest);
+}
+.phase-content {
+  background: var(--color-card-bg);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+}
+.phase-content ol { padding-left: 1.4em; }
+.phase-content ol li {
+  margin-bottom: 12px;
+  line-height: 1.7;
+  color: #444;
+}
+.phase-content ol li strong { color: var(--brand-color-forest); }
+.highlight-box {
+  background: rgba(64,145,108,0.08);
+  border-left: 4px solid var(--brand-color-moss);
+  padding: var(--space-md);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  margin: var(--space-md) 0;
+  font-weight: 500;
+  color: var(--brand-color-forest);
+}
+.warning-box {
+  background: rgba(232,208,163,0.2);
+  border-left: 4px solid #D4A853;
+  padding: var(--space-md);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  margin: var(--space-md) 0;
+}
+.warning-box strong { color: #8B6914; }
+
+/* ===== Accommodation Table ===== */
+.accom-table-wrap { overflow-x: auto; margin: var(--space-md) 0; }
+.accom-table {
+  width: 100%; border-collapse: collapse;
+  font-size: 0.9rem;
+  background: #fff; border-radius: var(--radius-sm);
+  overflow: hidden; box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+}
+.accom-table thead { background: var(--brand-color-forest); color: #fff; }
+.accom-table th {
+  padding: 12px 16px; text-align: left; font-weight: 600;
+  font-size: 0.85rem; letter-spacing: 0.03em;
+}
+.accom-table td { padding: 10px 16px; border-bottom: 1px solid #eee; color: #444; }
+.accom-table tbody tr:hover { background: rgba(64,145,108,0.04); }
+.accom-table .region { font-weight: 500; color: var(--brand-color-forest); }
+.accom-table .amount { font-weight: 600; color: var(--brand-color-moss); text-align: right; }
+
+/* ===== File Cards ===== */
+.file-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--space-md); }
+.file-card {
+  background: var(--color-card-bg);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  box-shadow: 4px 4px 0 var(--color-card-shadow-light), 8px 8px 0 rgba(27,67,50,0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer; display: flex; flex-direction: column; gap: var(--space-sm);
+}
+.file-card:hover {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 var(--color-card-shadow-light), 4px 4px 0 rgba(27,67,50,0.06);
+}
+.file-card .file-icon { font-size: 2.2rem; color: var(--brand-color-moss); }
+.file-card h4 { font-family: var(--font-heading); font-size: 1rem; }
+.file-card p { font-size: 0.82rem; color: #888; flex: 1; }
+.file-dl-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--brand-color-forest); color: #fff;
+  border: none; padding: 8px 18px; border-radius: var(--radius-sm);
+  font-size: 0.82rem; cursor: pointer; font-weight: 500;
+  transition: background var(--transition-fast);
+}
+.file-dl-btn:hover { background: var(--brand-color-pine); }
+
+/* ===== Notice List ===== */
+.notice-list { display: flex; flex-direction: column; gap: var(--space-sm); }
+.notice-item {
+  background: var(--color-card-bg);
+  border-radius: var(--radius-md);
+  padding: var(--space-md) var(--space-lg);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  display: flex; gap: var(--space-md);
+  align-items: flex-start;
+  transition: transform 0.15s ease;
+}
+.notice-item:hover { transform: translateX(4px); }
+.notice-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--brand-color-moss);
+  margin-top: 7px; flex-shrink: 0;
+}
+.notice-item h4 { font-size: 0.95rem; margin-bottom: 4px; color: var(--brand-color-forest); }
+.notice-item p { font-size: 0.85rem; color: #777; }
+
+/* ===== Teacher Add Section ===== */
+.inline-add {
+  background: var(--color-card-bg);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  box-shadow: 4px 4px 0 var(--color-card-shadow-light), 8px 8px 0 rgba(27,67,50,0.06);
+  margin-bottom: var(--space-lg);
+}
+.inline-add h3 {
+  font-family: var(--font-heading);
+  margin-bottom: var(--space-md);
+  color: var(--brand-color-forest);
+}
+.form-row { display: flex; gap: var(--space-sm); flex-wrap: wrap; margin-bottom: var(--space-sm); }
+.form-row input, .form-row textarea {
+  flex: 1; min-width: 200px;
+  padding: 10px 14px;
+  border: 1.5px solid var(--color-border-light);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  background: #fff;
+  transition: border var(--transition-fast);
+}
+.form-row input:focus, .form-row textarea:focus {
+  outline: none;
+  border-color: var(--brand-color-moss);
+  box-shadow: 0 0 0 3px rgba(64,145,108,0.1);
+}
+
+/* ===== Teacher Admin Panel ===== */
+.admin-panel {
+  display: none;
+  background: #f9faf8;
+  border-top: 3px solid var(--brand-color-moss);
+}
+.admin-panel.visible { display: block; }
+.admin-tabs {
+  display: flex; gap: 4px; flex-wrap: wrap;
+  margin-bottom: var(--space-lg);
+  border-bottom: 1px solid var(--color-border-light);
+  padding-bottom: 0;
+}
+.admin-tab {
+  padding: 10px 20px;
+  border: none; background: none;
+  cursor: pointer; font-size: 0.88rem; font-weight: 500;
+  color: #888;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: all var(--transition-fast);
+}
+.admin-tab.active, .admin-tab:hover {
+  color: var(--brand-color-forest);
+  border-bottom-color: var(--brand-color-moss);
+}
+.admin-tab-content { display: none; }
+.admin-tab-content.active { display: block; }
+
+.json-editor {
+  width: 100%; min-height: 300px;
+  font-family: var(--font-mono); font-size: 0.85rem;
+  padding: var(--space-md); border: 1.5px solid var(--color-border-light);
+  border-radius: var(--radius-sm); background: #fff;
+  resize: vertical;
+}
+.json-editor:focus { outline: none; border-color: var(--brand-color-moss); }
+.admin-actions { display: flex; gap: var(--space-sm); margin-top: var(--space-md); flex-wrap: wrap; }
+
+/* ===== Footer ===== */
+.site-footer {
+  background: var(--brand-color-forest);
+  color: rgba(238,237,231,0.7);
+  padding: var(--space-xl) var(--page-margin);
+  text-align: center;
+  font-size: 0.85rem;
+}
+.site-footer a { color: var(--brand-color-sage); }
+.site-footer a:hover { text-decoration: underline; }
+
+/* ===== Toast ===== */
+.toast {
+  position: fixed; bottom: 30px; right: 30px; z-index: 10000;
+  background: var(--brand-color-forest); color: #fff;
+  padding: 14px 24px; border-radius: var(--radius-md);
+  font-weight: 500; box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  animation: toastIn 0.35s ease, toastOut 0.35s ease 2.2s forwards;
+  max-width: 400px;
+}
+@keyframes toastIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes toastOut { from { opacity: 1; } to { opacity: 0; transform: translateY(-10px); } }
+
+/* ===== Responsive ===== */
+@media (max-width: 1024px) {
+  .steps-row { grid-template-columns: repeat(2, 1fr); }
+  .entry-cards { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 768px) {
+  :root { --page-margin: 20px; --space-2xl: 80px; }
+  .nav-links { display: none; position: absolute; top: var(--nav-height); left: 0; right: 0;
+    flex-direction: column; background: rgba(27,67,50,0.97); padding: 20px;
+    backdrop-filter: blur(12px);
+  }
+  .nav-links.open { display: flex; }
+  .hamburger { display: flex; }
+  .steps-row { grid-template-columns: 1fr 1fr; }
+  .entry-cards { grid-template-columns: 1fr; }
+  .hero h1 { font-size: 2rem; }
+  .form-row { flex-direction: column; }
+  .phase-header { flex-direction: column; align-items: flex-start; }
+}
+@media (max-width: 480px) {
+  .steps-row { grid-template-columns: 1fr; }
+  .hero-buttons { flex-direction: column; align-items: center; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== Navigation ===== -->
+<header class="site-header" id="siteHeader">
+  <div class="nav-inner">
+    <a href="#home" class="nav-logo">
+      <i class="fa-solid fa-suitcase-medical"></i> 报销流程导航
+    </a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="#home" class="active" data-nav="home">首页</a></li>
+      <li><a href="#process" data-nav="process">流程指南</a></li>
+      <li><a href="#downloads" data-nav="downloads">文件下载</a></li>
+      <li><a href="#notices" data-nav="notices">注意事项</a></li>
+      <li><a href="#admin" class="nav-admin-btn" data-nav="admin" id="navAdminBtn"><i class="fa-solid fa-lock"></i> 教师管理</a></li>
+    </ul>
+    <button class="hamburger" id="hamburger" aria-label="菜单">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<!-- ===== Home Page ===== -->
+<section class="hero" id="home">
+  <div class="hero-inner">
+    <p class="hero-eyebrow">TRAVEL REIMBURSEMENT GUIDE</p>
+    <h1>出差报销，<br>每一步都清晰明了</h1>
+    <p>为学生和教师提供完整的因公出差报销流程导航——从赛前准备到报销完成，掌握每一个环节</p>
+    <div class="hero-buttons">
+      <a href="#process" class="btn btn-primary"><i class="fa-solid fa-route"></i> 查看报销流程</a>
+      <a href="#downloads" class="btn btn-secondary"><i class="fa-solid fa-download"></i> 下载审批表格</a>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Core Steps ===== -->
+<section class="section" style="background:#fff;">
+  <div class="section-inner">
+    <div class="section-header">
+      <p class="section-eyebrow">CORE PROCESS</p>
+      <h2>报销核心步骤</h2>
+      <p>从赛前材料准备到最终报销完成，四步走通全流程</p>
+    </div>
+    <div class="steps-row">
+      <div class="step-card">
+        <div class="step-number">1</div>
+        <h3>赛前准备</h3>
+        <p>填写审批表、准备红头文件、入围证明、飞机票审批</p>
+      </div>
+      <div class="step-card">
+        <div class="step-number">2</div>
+        <h3>提交辅导员</h3>
+        <p>将所有材料整理齐全，交给本队辅导员审核与签字</p>
+      </div>
+      <div class="step-card">
+        <div class="step-number">3</div>
+        <h3>学院审批</h3>
+        <p>辅导员统一提交大队 → 学院财务审批 → 经费下拨</p>
+      </div>
+      <div class="step-card">
+        <div class="step-number">4</div>
+        <h3>报销完成</h3>
+        <p>审批通过后按要求提交发票，完成报销流程</p>
+      </div>
+    </div>
+
+    <!-- Entry Cards -->
+    <div class="entry-cards">
+      <a href="#downloads" class="entry-card">
+        <div class="card-icon"><i class="fa-solid fa-file-signature"></i></div>
+        <h4>审批表格下载</h4>
+        <p>因公出差审批表、超标准乘坐审批表等</p>
+      </a>
+      <a href="#process" class="entry-card">
+        <div class="card-icon"><i class="fa-solid fa-plane"></i></div>
+        <h4>机票审批指南</h4>
+        <p>乘坐飞机条件、比价要求、审批表填写</p>
+      </a>
+      <a href="#process" class="entry-card">
+        <div class="card-icon"><i class="fa-solid fa-hotel"></i></div>
+        <h4>住宿标准查询</h4>
+        <p>全国各地住宿费限额标准速查表</p>
+      </a>
+      <a href="#process" class="entry-card">
+        <div class="card-icon"><i class="fa-solid fa-people-group"></i></div>
+        <h4>团队报销规则</h4>
+        <p>多人出差统一报销流程与注意事项</p>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Process Guide ===== -->
+<section class="section" id="process">
+  <div class="section-inner">
+    <div class="section-header">
+      <p class="section-eyebrow">PROCESS GUIDE</p>
+      <h2>报销流程指南</h2>
+      <p>按阶段查阅详细流程，确保每一步材料齐全</p>
+    </div>
+
+    <!-- Phase 1 -->
+    <div class="phase-section">
+      <div class="phase-header">
+        <span class="phase-badge">阶段一</span>
+        <h3>赛前准备材料</h3>
+      </div>
+      <div class="phase-content" id="phase1Content">
+        <ol>
+          <li><strong>因公出差审批表：</strong>出差事由中须注明指导老师及其电话号码；<strong>第一行申请理由括号内备注带队老师</strong>（示例：xxx 带队老师为西南医院消化内科 xxx，xxx 为医学心理系 xxx）。</li>
+          <li><strong>比赛通知（红头文件）：</strong>需包含赛事名称、比赛时间、比赛地点，以正式红头文件为准。</li>
+          <li><strong>入围名单证明：</strong>官方截图或公示文件的打印件，证明团队已进入比赛入围名单。</li>
+          <li><strong>飞机票审批：</strong>如需乘坐飞机，须满足以下条件 ——
+            <ul style="margin-top:6px;">
+              <li>填写《超标准乘坐交通工具审批表》（去程和返程各一份）；</li>
+              <li>飞机票价格须比当天高铁二等座便宜，提供比价截图作为证明。</li>
+            </ul>
+          </li>
+        </ol>
+        <div class="highlight-box">
+          <strong>💡 提示：</strong>若带队老师为本学院教员，由带队老师提交出差审批，无需学生另行提交。
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 2 -->
+    <div class="phase-section">
+      <div class="phase-header">
+        <span class="phase-badge">阶段二</span>
+        <h3>报销材料准备</h3>
+      </div>
+      <div class="phase-content" id="phase2Content">
+        <ol>
+          <li><strong>餐补与交通费：</strong>餐补和交通费合计每人每天 <strong>100 元包干</strong>。有餐补的不再报销餐费；无餐补的每日报销 100 元（包含餐费和市内交通费）。</li>
+          <li><strong>酒店发票：</strong>需提前联系酒店前台，将电子发票发至个人邮箱；打印后须<strong>彩印</strong>，并在每页右下角<strong>签署个人姓名</strong>。</li>
+          <li><strong>会务费 / 交通费：</strong>可报销，须提供相应的正规发票。</li>
+          <li><strong>团队多人报销：</strong>统一只提供一个银行卡号，所有款项汇入该卡。最后需列表汇总：每个人的去程费用、返程费用、酒店费用及实际总报销金额。</li>
+        </ol>
+
+        <h4 style="margin-top:24px;margin-bottom:12px;font-family:var(--font-heading);color:var(--brand-color-forest);">🏨 住宿费限额参考表（单位：元/天）</h4>
+        <div class="accom-table-wrap">
+          <table class="accom-table" id="accomTable">
+            <thead>
+              <tr><th>地区</th><th>限额标准（元/天）</th></tr>
+            </thead>
+            <tbody id="accomTableBody"></tbody>
+          </table>
+        </div>
+        <p style="font-size:0.8rem;color:#999;margin-top:8px;">* 数据可经由教师管理后台修改更新</p>
+      </div>
+    </div>
+
+    <!-- Phase 3 -->
+    <div class="phase-section">
+      <div class="phase-header">
+        <span class="phase-badge">阶段三</span>
+        <h3>发票规范与提交要求</h3>
+      </div>
+      <div class="phase-content" id="phase3Content">
+        <ol>
+          <li><strong>发票彩印与签名：</strong>所有发票须彩色打印，并在每页右下角签署个人姓名。</li>
+          <li><strong>勤俭节约通知要求：</strong>一个团队原则上只由汇报人出差；如需多人同行，带队老师须出具书面材料（如"某某赛事要求这几名学生参加"）。</li>
+          <li><strong>医创赛联动规则：</strong>同一赛事各队须统一将出差学生写在一张出差表上，实现联动管理。</li>
+          <li><strong>整体报销顺序：</strong>赛前准备材料 → 提交辅导员 → 大队领导签字 → 学院财务审批 → 有问题打回重提。</li>
+        </ol>
+        <div class="warning-box">
+          <strong>⚠️ 注意：</strong>审批不通过将被退回重新提交。请仔细检查所有材料，特别是发票规范（彩印 + 签名）和审批表备注信息，避免反复修改延误报销。
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== File Downloads ===== -->
+<section class="section" id="downloads" style="background:#fff;">
+  <div class="section-inner">
+    <div class="section-header">
+      <p class="section-eyebrow">DOWNLOADS</p>
+      <h2>文件下载</h2>
+      <p>分类下载报销所需各类表格与材料</p>
+    </div>
+
+    <h3 style="font-family:var(--font-heading);margin-bottom:var(--space-md);color:var(--brand-color-forest);">📋 审批表格</h3>
+    <div class="file-cards" id="fileCardsApproval"></div>
+
+    <h3 style="font-family:var(--font-heading);margin:var(--space-lg) 0 var(--space-md);color:var(--brand-color-forest);">📎 其他材料</h3>
+    <div class="file-cards" id="fileCardsOther"></div>
+  </div>
+</section>
+
+<!-- ===== Notices ===== -->
+<section class="section" id="notices">
+  <div class="section-inner">
+    <div class="section-header">
+      <p class="section-eyebrow">NOTICES</p>
+      <h2>注意事项</h2>
+      <p>最新报销政策提醒与常见问题汇总</p>
+    </div>
+    <div class="notice-list" id="noticeList"></div>
+
+    <!-- Teacher-only: Add Notice (hidden by default) -->
+    <div class="inline-add" id="addNoticeBox" style="display:none; margin-top:var(--space-xl);">
+      <h3><i class="fa-solid fa-plus-circle"></i> 添加新注意事项（教师）</h3>
+      <div class="form-row">
+        <input type="text" id="noticeTitle" placeholder="标题（例如：发票抬头要求）">
+      </div>
+      <div class="form-row">
+        <textarea id="noticeDesc" rows="2" placeholder="详细描述..."></textarea>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="addNotice()"><i class="fa-solid fa-save"></i> 保存并发布</button>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Teacher Admin Panel ===== -->
+<section class="section admin-panel" id="adminPanel">
+  <div class="section-inner">
+    <div class="section-header">
+      <p class="section-eyebrow">TEACHER ADMIN</p>
+      <h2>教师管理面板</h2>
+      <p>编辑流程步骤、住宿标准、上传文件、管理注意事项（数据自动保存至浏览器）</p>
+    </div>
+
+    <div class="admin-tabs" id="adminTabs">
+      <button class="admin-tab active" data-tab="tabSteps">📝 流程步骤编辑</button>
+      <button class="admin-tab" data-tab="tabAccom">🏨 住宿标准编辑</button>
+      <button class="admin-tab" data-tab="tabFiles">📁 文件上传管理</button>
+      <button class="admin-tab" data-tab="tabNotices">📢 注意事项管理</button>
+    </div>
+
+    <!-- Tab: Edit Steps -->
+    <div class="admin-tab-content active" id="tabSteps">
+      <p style="color:#888;margin-bottom:16px;">编辑下方四个核心步骤的标题和描述，点击保存后前台实时更新。</p>
+      <div id="adminStepsEditor"></div>
+      <div class="admin-actions">
+        <button class="btn btn-primary btn-sm" onclick="saveSteps()"><i class="fa-solid fa-save"></i> 保存流程步骤</button>
+      </div>
+    </div>
+
+    <!-- Tab: Edit Accommodation -->
+    <div class="admin-tab-content" id="tabAccom">
+      <p style="color:#888;margin-bottom:16px;">以 JSON 格式编辑各地区住宿费限额标准（格式：[{"region":"地区","amount":数值}]），点击保存后表格实时更新。</p>
+      <textarea class="json-editor" id="accomJsonEditor" spellcheck="false"></textarea>
+      <div class="admin-actions">
+        <button class="btn btn-primary btn-sm" onclick="saveAccommodation()"><i class="fa-solid fa-save"></i> 保存住宿标准</button>
+        <button class="btn btn-secondary btn-sm" onclick="resetAccommodation()"><i class="fa-solid fa-rotate-left"></i> 恢复默认</button>
+      </div>
+    </div>
+
+    <!-- Tab: File Upload -->
+    <div class="admin-tab-content" id="tabFiles">
+      <p style="color:#888;margin-bottom:16px;">上传新文件（模拟），新文件将自动出现在前台文件下载页面。</p>
+      <div class="inline-add">
+        <div class="form-row">
+          <input type="text" id="newFileName" placeholder="文件名称（例如：新版出差审批表）">
+        </div>
+        <div class="form-row">
+          <input type="text" id="newFileDesc" placeholder="文件描述">
+        </div>
+        <div class="form-row">
+          <select id="newFileCategory" style="padding:10px 14px;border:1.5px solid var(--color-border-light);border-radius:var(--radius-sm);font-size:0.9rem;">
+            <option value="approval">审批表格</option>
+            <option value="other">其他材料</option>
+          </select>
+          <input type="text" id="newFileIcon" placeholder="Font Awesome 图标（例如：fa-file-pdf）" value="fa-file-pdf">
+          <input type="text" id="newFileRealPath" placeholder="真实文件名（可选，如：报销表.xlsx，留空则模拟下载）">
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="uploadFile()"><i class="fa-solid fa-upload"></i> 上传文件（模拟）</button>
+      </div>
+    </div>
+
+    <!-- Tab: Edit Notices -->
+    <div class="admin-tab-content" id="tabNotices">
+      <p style="color:#888;margin-bottom:16px;">管理注意事项列表，可删除已有条目或批量重置。</p>
+      <div id="adminNoticesList"></div>
+      <div class="admin-actions">
+        <button class="btn btn-primary btn-sm" onclick="resetNotices()"><i class="fa-solid fa-rotate-left"></i> 恢复默认注意事项</button>
+      </div>
+    </div>
+
+    <div style="margin-top:var(--space-xl);padding-top:var(--space-md);border-top:1px solid #e0e0e0;text-align:center;">
+      <button class="btn btn-secondary btn-sm" onclick="resetAll()"><i class="fa-solid fa-triangle-exclamation"></i> 重置全部数据为默认值</button>
+      <p style="font-size:0.78rem;color:#aaa;margin-top:8px;">所有修改自动保存到浏览器 localStorage，关闭页面后数据不丢失。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Footer ===== -->
+<footer class="site-footer">
+  <p>出差报销流程导航 &copy; 2026 · 数据保存于本地浏览器</p>
+  <p style="margin-top:4px;">如有疑问请联系各队辅导员或学院财务部门</p>
+</footer>
+
+<!-- ===== JavaScript ===== -->
+<script>
+// ==================== DATA STORE ====================
+
+// --- Default accommodation data ---
+const DEFAULT_ACCOM = [
+  { region: '北京市', amount: 650 },
+  { region: '上海市', amount: 600 },
+  { region: '广东省', amount: 550 },
+  { region: '深圳市', amount: 550 },
+  { region: '浙江省', amount: 500 },
+  { region: '厦门市', amount: 500 },
+  { region: '江苏省', amount: 490 },
+  { region: '福建省', amount: 480 },
+  { region: '河南省', amount: 480 },
+  { region: '云南省', amount: 480 },
+  { region: '四川省', amount: 470 },
+  { region: '青海省', amount: 500 },
+  { region: '海南省', amount: 500 },
+  { region: '西藏自治区', amount: 500 },
+  { region: '青岛市', amount: 380 },
+  { region: '大连市', amount: 490 },
+  { region: '山东省', amount: 380 },
+  { region: '天津市', amount: 380 },
+  { region: '重庆市', amount: 370 },
+  { region: '山西省', amount: 480 },
+  { region: '湖北省', amount: 480 },
+  { region: '辽宁省', amount: 480 },
+  { region: '新疆维吾尔自治区', amount: 480 },
+  { region: '贵州省', amount: 370 },
+  { region: '江西省', amount: 350 },
+  { region: '甘肃省', amount: 350 },
+  { region: '广西壮族自治区', amount: 350 },
+  { region: '宁夏回族自治区', amount: 350 },
+  { region: '安徽省', amount: 460 },
+  { region: '陕西省', amount: 460 },
+  { region: '内蒙古自治区', amount: 460 },
+  { region: '河北省', amount: 450 },
+  { region: '吉林省', amount: 450 },
+  { region: '湖南省', amount: 450 },
+  { region: '黑龙江省', amount: 450 }
+];
+
+// --- Default notices ---
+const DEFAULT_NOTICES = [
+  { title: '发票彩印要求', desc: '所有报销发票必须彩色打印，黑白打印件不予受理。请使用彩色打印机输出后再提交。' },
+  { title: '发票签名规范', desc: '每页发票右下角须用黑色签字笔签署报销人姓名，不得使用铅笔或蓝色笔。' },
+  { title: '餐补与交通费包干说明', desc: '餐补和交通费合计每人每天100元包干。有餐补的不再报销餐费。超标准部分自行承担。' },
+  { title: '报销时效提醒', desc: '出差结束后30日内须提交全部报销材料，逾期将影响财务审批进度。' },
+  { title: '团队报销银行卡要求', desc: '多人团队报销统一提供一个银行卡号，所有费用汇入该卡。最后须列表汇总每人各项费用明细。' },
+  { title: '勤俭节约通知', desc: '一个团队原则上只由汇报人出差。如需多人同行，带队老师须出具书面材料说明必要性。' },
+  { title: '机票比价要求', desc: '乘坐飞机须填写《超标准乘坐交通工具审批表》，并提供当天高铁二等座比价截图，飞机票价须低于高铁价。' }
+];
+
+// --- Default files ---
+const DEFAULT_FILES = [
+  { name: '因公出差审批表', desc: '赛前必填，须注明指导老师及电话，第一行备注带队老师', category: 'approval', icon: 'fa-file-excel', realPath: '因公出差审批表.xlsx' },
+  { name: '外出参加申请书', desc: '外出参赛须提交的正式申请书', category: 'approval', icon: 'fa-file-word', realPath: '外出参加申请书.docx' },
+  { name: '超标准乘坐交通工具审批表', desc: '乘坐飞机时去程和返程各需一份，附比价截图', category: 'approval', icon: 'fa-file-excel', realPath: '超标准乘坐交通工具审批表.xlsx' },
+  { name: '比赛红头文件模板', desc: '需包含赛事名称、时间、地点（模板参考）', category: 'approval', icon: 'fa-file-pdf' },
+  { name: '入围名单证明模板', desc: '官方截图或公示文件打印件（模板参考）', category: 'approval', icon: 'fa-file-image' },
+  { name: '团队报销汇总表', desc: '多人出差各项费用汇总模板', category: 'other', icon: 'fa-table' },
+  { name: '勤俭节约说明材料', desc: '多人同行情况须带队老师出具', category: 'other', icon: 'fa-file-word' },
+  { name: '报销流程图（高清）', desc: '完整报销流程一图看懂', category: 'other', icon: 'fa-diagram-project' }
+];
+
+// --- Default steps ---
+const DEFAULT_STEPS = [
+  { title: '赛前准备', desc: '填写审批表、准备红头文件、入围证明、飞机票审批' },
+  { title: '提交辅导员', desc: '将所有材料整理齐全，交给本队辅导员审核与签字' },
+  { title: '学院审批', desc: '辅导员统一提交大队 → 学院财务审批 → 经费下拨' },
+  { title: '报销完成', desc: '审批通过后按要求提交发票，完成报销流程' }
+];
+
+// ==================== LOCAL STORAGE HELPERS ====================
+function loadData(key, defaultData) {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : defaultData;
+  } catch(e) { return defaultData; }
+}
+function saveData(key, data) { localStorage.setItem(key, JSON.stringify(data)); }
+
+// ==================== INIT DATA ====================
+let accomData     = loadData('accomData', DEFAULT_ACCOM);
+let noticeData    = loadData('noticeData', DEFAULT_NOTICES);
+let fileData      = loadData('fileData', DEFAULT_FILES);
+let stepsData     = loadData('stepsData', DEFAULT_STEPS);
+let isAdminMode   = loadData('isAdminMode', false);
+
+// ==================== TOAST ====================
+function showToast(msg) {
+  const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2600);
+}
+
+// ==================== RENDER FUNCTIONS ====================
+function renderAccomTable() {
+  const tbody = document.getElementById('accomTableBody');
+  if (!tbody) return;
+  tbody.innerHTML = accomData.map(a =>
+    `<tr><td class="region">${a.region}</td><td class="amount">${a.amount}</td></tr>`
+  ).join('');
+}
+
+function renderFileCards() {
+  const approvalDiv = document.getElementById('fileCardsApproval');
+  const otherDiv = document.getElementById('fileCardsOther');
+  if (!approvalDiv || !otherDiv) return;
+  const approvalFiles = fileData.filter(f => f.category === 'approval');
+  const otherFiles = fileData.filter(f => f.category === 'other');
+  const cardHTML = f => {
+    const clickHandler = f.realPath
+      ? `downloadFile('${f.realPath}', '${f.name}')`
+      : `simulateDownload('${f.name}')`;
+    const badge = f.realPath ? '<span style="display:inline-block;background:#40916C;color:#fff;font-size:0.7rem;padding:2px 8px;border-radius:10px;margin-left:6px;">真实文件</span>' : '';
+    return `
+    <div class="file-card" onclick="${clickHandler}">
+      <div class="file-icon"><i class="fa-solid ${f.icon}"></i></div>
+      <h4>${f.name}${badge}</h4>
+      <p>${f.desc}</p>
+      <span class="file-dl-btn"><i class="fa-solid fa-download"></i> ${f.realPath ? '下载文件' : '下载（模拟）'}</span>
+    </div>`;
+  };
+  approvalDiv.innerHTML = approvalFiles.map(cardHTML).join('') || '<p style="color:#999;">暂无审批表格文件</p>';
+  otherDiv.innerHTML = otherFiles.map(cardHTML).join('') || '<p style="color:#999;">暂无其他材料文件</p>';
+}
+
+function renderNotices() {
+  const list = document.getElementById('noticeList');
+  if (!list) return;
+  list.innerHTML = noticeData.map(n => `
+    <div class="notice-item">
+      <div class="notice-dot"></div>
+      <div><h4>${n.title}</h4><p>${n.desc}</p></div>
+    </div>`).join('');
+}
+
+function renderSteps() {
+  const cards = document.querySelectorAll('.step-card');
+  cards.forEach((card, i) => {
+    if (i < stepsData.length) {
+      card.querySelector('h3').textContent = stepsData[i].title;
+      card.querySelector('p').textContent = stepsData[i].desc;
+    }
+  });
+}
+
+function renderAdminNotices() {
+  const list = document.getElementById('adminNoticesList');
+  if (!list) return;
+  list.innerHTML = noticeData.map((n, i) => `
+    <div class="notice-item">
+      <div class="notice-dot"></div>
+      <div style="flex:1;"><h4>${n.title}</h4><p>${n.desc}</p></div>
+      <button class="btn btn-xs btn-secondary" style="color:#c0392b;border-color:#c0392b;" onclick="deleteNotice(${i})"><i class="fa-solid fa-trash"></i></button>
+    </div>`).join('');
+}
+
+function renderAdminStepsEditor() {
+  const editor = document.getElementById('adminStepsEditor');
+  if (!editor) return;
+  editor.innerHTML = stepsData.map((s, i) => `
+    <div style="margin-bottom:16px;padding:16px;background:#fff;border-radius:var(--radius-sm);border:1px solid #e0e0e0;">
+      <label style="font-weight:600;display:block;margin-bottom:4px;color:var(--brand-color-forest);">步骤 ${i + 1} 标题</label>
+      <input type="text" value="${s.title.replace(/"/g,'&quot;')}" data-step-idx="${i}" data-step-field="title"
+        style="width:100%;padding:10px;margin-bottom:8px;border:1.5px solid var(--color-border-light);border-radius:var(--radius-sm);font-size:0.9rem;">
+      <label style="font-weight:600;display:block;margin-bottom:4px;color:var(--brand-color-forest);">描述</label>
+      <input type="text" value="${s.desc.replace(/"/g,'&quot;')}" data-step-idx="${i}" data-step-field="desc"
+        style="width:100%;padding:10px;border:1.5px solid var(--color-border-light);border-radius:var(--radius-sm);font-size:0.9rem;">
+    </div>`).join('');
+}
+
+function refreshAccomEditor() {
+  const editor = document.getElementById('accomJsonEditor');
+  if (editor) editor.value = JSON.stringify(accomData, null, 2);
+}
+
+function refreshAll() {
+  renderAccomTable();
+  renderFileCards();
+  renderNotices();
+  renderSteps();
+  renderAdminNotices();
+  renderAdminStepsEditor();
+  refreshAccomEditor();
+  updateAdminVisibility();
+}
+
+// ==================== DOWNLOAD FUNCTIONS ====================
+function simulateDownload(name) {
+  showToast(`📥 正在准备下载：${name}（模拟下载 — 请从审批材料文件夹中手动获取）`);
+}
+
+function downloadFile(realPath, name) {
+  // Create a link to the real file (same folder)
+  const link = document.createElement('a');
+  link.href = realPath;
+  link.download = realPath;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  showToast(`✅ 正在下载：${name}`);
+}
+
+// ==================== ADD NOTICE ====================
+function addNotice() {
+  const title = document.getElementById('noticeTitle').value.trim();
+  const desc = document.getElementById('noticeDesc').value.trim();
+  if (!title || !desc) { showToast('⚠️ 请填写标题和描述'); return; }
+  noticeData.unshift({ title, desc });
+  saveData('noticeData', noticeData);
+  document.getElementById('noticeTitle').value = '';
+  document.getElementById('noticeDesc').value = '';
+  refreshAll();
+  showToast('✅ 注意事项已发布！');
+}
+
+// ==================== DELETE NOTICE ====================
+function deleteNotice(idx) {
+  if (!confirm('确定删除该注意事项？')) return;
+  noticeData.splice(idx, 1);
+  saveData('noticeData', noticeData);
+  refreshAll();
+  showToast('🗑️ 注意事项已删除');
+}
+
+// ==================== RESET NOTICES ====================
+function resetNotices() {
+  if (!confirm('确定恢复为默认注意事项？当前数据将被覆盖。')) return;
+  noticeData = [...DEFAULT_NOTICES];
+  saveData('noticeData', noticeData);
+  refreshAll();
+  showToast('✅ 注意事项已恢复默认');
+}
+
+// ==================== SAVE STEPS ====================
+function saveSteps() {
+  const inputs = document.querySelectorAll('#adminStepsEditor input');
+  inputs.forEach(inp => {
+    const idx = parseInt(inp.dataset.stepIdx);
+    const field = inp.dataset.stepField;
+    if (!isNaN(idx) && field) stepsData[idx][field] = inp.value;
+  });
+  saveData('stepsData', stepsData);
+  refreshAll();
+  showToast('✅ 流程步骤已保存！');
+}
+
+// ==================== SAVE ACCOMMODATION ====================
+function saveAccommodation() {
+  try {
+    const parsed = JSON.parse(document.getElementById('accomJsonEditor').value);
+    if (!Array.isArray(parsed)) throw new Error('必须是数组格式');
+    for (const item of parsed) {
+      if (!item.region || typeof item.amount !== 'number') throw new Error('每项须包含 region（字符串）和 amount（数字）');
+    }
+    accomData = parsed;
+    saveData('accomData', accomData);
+    refreshAll();
+    showToast('✅ 住宿标准已更新！');
+  } catch(e) {
+    showToast('⚠️ JSON 格式错误：' + e.message);
+  }
+}
+
+function resetAccommodation() {
+  if (!confirm('确定恢复为默认住宿标准？')) return;
+  accomData = [...DEFAULT_ACCOM];
+  saveData('accomData', accomData);
+  refreshAll();
+  showToast('✅ 住宿标准已恢复默认');
+}
+
+// ==================== UPLOAD FILE ====================
+function uploadFile() {
+  const name = document.getElementById('newFileName').value.trim();
+  const desc = document.getElementById('newFileDesc').value.trim();
+  const category = document.getElementById('newFileCategory').value;
+  const icon = document.getElementById('newFileIcon').value.trim() || 'fa-file';
+  const realPath = document.getElementById('newFileRealPath').value.trim();
+  if (!name || !desc) { showToast('⚠️ 请填写文件名称和描述'); return; }
+  const newFile = { name, desc, category, icon };
+  if (realPath) newFile.realPath = realPath;
+  fileData.push(newFile);
+  saveData('fileData', fileData);
+  document.getElementById('newFileName').value = '';
+  document.getElementById('newFileDesc').value = '';
+  document.getElementById('newFileRealPath').value = '';
+  refreshAll();
+  showToast(realPath ? '✅ 文件已上传并关联真实文件！' : '✅ 文件已上传（模拟）！');
+}
+
+// ==================== RESET ALL ====================
+function resetAll() {
+  if (!confirm('⚠️ 确定重置所有数据为默认值？\n\n这将清除：流程步骤、住宿标准、注意事项、文件列表。\n此操作不可撤销！')) return;
+  accomData  = [...DEFAULT_ACCOM];
+  noticeData = [...DEFAULT_NOTICES];
+  fileData   = [...DEFAULT_FILES];
+  stepsData  = [...DEFAULT_STEPS];
+  saveData('accomData', accomData);
+  saveData('noticeData', noticeData);
+  saveData('fileData', fileData);
+  saveData('stepsData', stepsData);
+  refreshAll();
+  showToast('✅ 全部数据已恢复默认值');
+}
+
+// ==================== ADMIN PANEL TOGGLE ====================
+function updateAdminVisibility() {
+  const panel = document.getElementById('adminPanel');
+  const addNoticeBox = document.getElementById('addNoticeBox');
+  const navAdminBtn = document.getElementById('navAdminBtn');
+
+  if (isAdminMode) {
+    panel.classList.add('visible');
+    if (addNoticeBox) addNoticeBox.style.display = 'block';
+    if (navAdminBtn) navAdminBtn.innerHTML = '<i class="fa-solid fa-lock-open"></i> 退出管理';
+  } else {
+    panel.classList.remove('visible');
+    if (addNoticeBox) addNoticeBox.style.display = 'none';
+    if (navAdminBtn) navAdminBtn.innerHTML = '<i class="fa-solid fa-lock"></i> 教师管理';
+  }
+}
+
+function toggleAdmin() {
+  isAdminMode = !isAdminMode;
+  saveData('isAdminMode', isAdminMode);
+  updateAdminVisibility();
+  refreshAll();
+  if (isAdminMode) {
+    document.getElementById('adminPanel').scrollIntoView({ behavior: 'smooth' });
+    showToast('🔓 已进入教师管理模式');
+  } else {
+    showToast('🔒 已退出教师管理模式');
+  }
+}
+
+// ==================== ADMIN TABS ====================
+function initAdminTabs() {
+  const tabs = document.querySelectorAll('.admin-tab');
+  const contents = document.querySelectorAll('.admin-tab-content');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const target = tab.dataset.tab;
+      tabs.forEach(t => t.classList.remove('active'));
+      contents.forEach(c => c.classList.remove('active'));
+      tab.classList.add('active');
+      const targetEl = document.getElementById(target);
+      if (targetEl) targetEl.classList.add('active');
+      // Refresh accom editor when switching to that tab
+      if (target === 'tabAccom') refreshAccomEditor();
+    });
+  });
+}
+
+// ==================== NAVIGATION ====================
+function initNavigation() {
+  // Smooth scroll for all nav links
+  document.querySelectorAll('.nav-links a[data-nav]').forEach(link => {
+    link.addEventListener('click', function(e) {
+      const navTarget = this.dataset.nav;
+      if (navTarget === 'admin') {
+        e.preventDefault();
+        toggleAdmin();
+        return;
+      }
+      // Smooth scroll to section
+      const target = document.getElementById(navTarget);
+      if (target) {
+        e.preventDefault();
+        target.scrollIntoView({ behavior: 'smooth' });
+        // Close mobile menu
+        document.getElementById('navLinks').classList.remove('open');
+        document.getElementById('hamburger').classList.remove('open');
+      }
+    });
+  });
+
+  // Hamburger menu
+  document.getElementById('hamburger').addEventListener('click', () => {
+    document.getElementById('navLinks').classList.toggle('open');
+    document.getElementById('hamburger').classList.toggle('open');
+  });
+
+  // Active link on scroll
+  const sections = ['home', 'process', 'downloads', 'notices'];
+  window.addEventListener('scroll', () => {
+    const scrollPos = window.scrollY + 120;
+    let current = 'home';
+    sections.forEach(id => {
+      const el = document.getElementById(id);
+      if (el && el.offsetTop <= scrollPos) current = id;
+    });
+    document.querySelectorAll('.nav-links a[data-nav]').forEach(a => {
+      a.classList.toggle('active', a.dataset.nav === current && current !== 'admin');
+    });
+
+    // Header shadow on scroll
+    document.getElementById('siteHeader').classList.toggle('scrolled', window.scrollY > 40);
+  });
+}
+
+// ==================== INIT ====================
+document.addEventListener('DOMContentLoaded', () => {
+  refreshAll();
+  initNavigation();
+  initAdminTabs();
+  updateAdminVisibility();
+  // If admin was enabled, refresh accom editor
+  if (isAdminMode) refreshAccomEditor();
+});
+</script>
+
+</body>
+</html>
