@@ -1043,9 +1043,10 @@ body::after {
 
 <!-- ===== Feature 1: Material Checklist Float ===== -->
 <div class="checklist-float" id="checklistFloat">
-  <div class="checklist-header" onclick="toggleChecklist()">
-    <span><i class="fa-solid fa-clipboard-check"></i> 材料清单检测</span>
-    <span class="count-badge" id="checklistCount">0/7</span>
+  <div class="checklist-header">
+    <span onclick="toggleChecklist()" style="flex:1;cursor:pointer;"><i class="fa-solid fa-clipboard-check"></i> 材料清单检测</span>
+    <span class="count-badge" id="checklistCount" onclick="toggleChecklist()" style="cursor:pointer;">0/7</span>
+    <button style="background:none;border:none;color:var(--color-button-beige);cursor:pointer;font-size:1rem;padding:0 0 0 8px;line-height:1;opacity:0.7;" onclick="event.stopPropagation(); hideChecklist()" title="关闭"><i class="fa-solid fa-xmark"></i></button>
   </div>
   <div class="checklist-body" id="checklistBody"></div>
 </div>
@@ -1816,15 +1817,19 @@ const BUBBLE_MESSAGES = {
 
 let bubbleHidden = false;
 
+let checklistHidden = false;
+let floatObserver = null;
+
 function initAssistant() {
   const sections = ['home', 'process', 'downloads', 'notices'];
-  const observer = new IntersectionObserver((entries) => {
+
+  // Observer for text content switching
+  const textObserver = new IntersectionObserver((entries) => {
     if (bubbleHidden) return;
     let activeSection = 'default';
     entries.forEach(entry => {
       if (entry.isIntersecting) activeSection = entry.target.id;
     });
-    // Find the highest section that's still visible
     for (const id of sections) {
       const el = document.getElementById(id);
       if (el) {
@@ -1836,8 +1841,29 @@ function initAssistant() {
   }, { threshold: [0, 0.2, 0.5] });
   sections.forEach(id => {
     const el = document.getElementById(id);
-    if (el) observer.observe(el);
+    if (el) textObserver.observe(el);
   });
+
+  // Observer for showing/hiding float elements (only from downloads page onward)
+  floatObserver = new IntersectionObserver((entries) => {
+    const checklist = document.getElementById('checklistFloat');
+    const bubble = document.getElementById('assistantBubble');
+    let visible = false;
+    entries.forEach(entry => {
+      if (entry.isIntersecting) visible = true;
+    });
+    if (checklist) checklist.style.display = (visible && !checklistHidden) ? 'block' : 'none';
+    if (bubble) bubble.style.display = (visible && !bubbleHidden) ? 'flex' : 'none';
+  }, { threshold: 0.1 });
+
+  const downloadsEl = document.getElementById('downloads');
+  const noticesEl = document.getElementById('notices');
+  if (downloadsEl) floatObserver.observe(downloadsEl);
+  if (noticesEl) floatObserver.observe(noticesEl);
+
+  // Initially hide both (they'll show when user scrolls to downloads)
+  document.getElementById('checklistFloat').style.display = 'none';
+  document.getElementById('assistantBubble').style.display = 'none';
 }
 
 function updateBubbleText(section) {
@@ -1862,7 +1888,29 @@ function hideBubble() {
   // Re-show after 2 minutes
   setTimeout(() => {
     bubbleHidden = false;
-    document.getElementById('assistantBubble').style.display = 'flex';
+    const downloadsEl = document.getElementById('downloads');
+    if (downloadsEl) {
+      const rect = downloadsEl.getBoundingClientRect();
+      if (rect.top < window.innerHeight) {
+        document.getElementById('assistantBubble').style.display = 'flex';
+      }
+    }
+  }, 120000);
+}
+
+function hideChecklist() {
+  checklistHidden = true;
+  document.getElementById('checklistFloat').style.display = 'none';
+  // Re-show after 2 minutes
+  setTimeout(() => {
+    checklistHidden = false;
+    const downloadsEl = document.getElementById('downloads');
+    if (downloadsEl) {
+      const rect = downloadsEl.getBoundingClientRect();
+      if (rect.top < window.innerHeight) {
+        document.getElementById('checklistFloat').style.display = 'block';
+      }
+    }
   }, 120000);
 }
 
